@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PoE 3.29 Kingsmarch Shipment Calculator</title>
+<style>
+body{margin:0;background:#161616;color:#ddd;font:14px Arial,sans-serif}
+.wrap{max-width:1050px;margin:24px auto;padding:0 16px}
+h1{font-size:26px;margin:0 0 6px;color:#f0c36a}
+.sub{color:#aaa;margin-bottom:18px}
+.card{background:#242424;border:1px solid #555;box-shadow:0 2px 8px #0008;margin-bottom:14px}
+.head{background:#3a3a3a;color:#fff;font-weight:bold;padding:9px 12px;border-bottom:1px solid #666}
+.body{padding:14px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+label{display:block;color:#aaa;font-size:12px;margin-bottom:4px}
+input,select{width:100%;box-sizing:border-box;background:#111;color:#eee;border:1px solid #666;padding:8px;border-radius:2px}
+.result{font-size:22px;color:#f0c36a;font-weight:bold}
+.small{font-size:12px;color:#999}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border:1px solid #444;text-align:left}
+th{background:#303030;color:#fff}
+tr:nth-child(even){background:#202020}
+.good{color:#8fd18f}.warn{color:#e6c66a}
+@media(max-width:750px){.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Kingsmarch 3.29 Shipment Calculator</h1>
+<div class="sub">Built for the current metal/crop shipping system. Target shipment value, tattoo count, and resource requirements.</div>
+
+<div class="card"><div class="head">Shipment target</div><div class="body"><div class="grid">
+<div><label>Target shipment value</label><input id="target" type="number" value="4000000" step="10000"></div>
+<div><label>Port</label><select id="port"><option>Ngakanu — STR Tattoos</option><option>Te Onui — DEX Tattoos</option><option>Mota Aro — INT Tattoos</option><option>Riben Fell — DEX Runegrafts</option><option>Pondium — INT Runegrafts</option><option>Kalguur — STR Runegrafts</option></select></div>
+<div><label>Dust shipment value (optional)</label><input id="dust" type="number" value="0" step="10000"></div>
+<div><label>Gold reserve</label><input id="gold" type="number" value="100000" step="10000"></div>
+</div></div></div>
+
+<div class="card"><div class="head">Your Kingsmarch workers</div><div class="body">
+<p class="small">First enter how many workers you have in each job. The calculator will then create a field for every worker so you can enter each worker's level and wage individually.</p>
+
+<div class="grid">
+<div><label>Farmers — count</label><input id="farmers" type="number" value="0" min="0" max="100"></div>
+<div><label>Miners — count</label><input id="miners" type="number" value="0" min="0" max="100"></div>
+<div><label>Smelters — count</label><input id="smelters" type="number" value="0" min="0" max="100"></div>
+<div><label>Disenchanters — count</label><input id="disenchanters" type="number" value="0" min="0" max="100"></div>
+</div>
+
+<div id="workerLists" style="margin-top:14px"></div>
+<div id="workerResult" class="small" style="margin-top:12px"></div>
+</div></div>
+
+<div class="card"><div class="head">Resource calculator</div><div class="body">
+<table><thead><tr><th>Resource</th><th>Value / unit</th><th>Units needed</th><th>Notes</th></tr></thead><tbody id="rows"></tbody></table>
+</div></div>
+
+<div class="card"><div class="head">Result</div><div class="body">
+<div class="grid">
+<div><div class="small">Reward rolls</div><div id="rolls" class="result">40</div></div>
+<div><div class="small">Resource value needed</div><div id="raw" class="result">4.00M</div></div>
+<div><div class="small">Dust contribution</div><div id="dustout" class="result">0</div></div>
+<div><div class="small">Gold reserve</div><div id="goldout" class="result">100k</div></div>
+</div>
+<p id="message" class="small"></p>
+</div></div>
+
+<div class="card"><div class="head">3.29 quick reference</div><div class="body">
+<ul>
+<li><b>Tattoos:</b> 10,000 shipment value per tattoo, capped at 40; 4M raw value reaches the cap. Dust does not increase tattoo count.</li>
+<li><b>STR Tattoos:</b> Ngakanu. <b>DEX:</b> Te Onui. <b>INT:</b> Mota Aro.</li>
+<li><b>Runegrafts:</b> Riben Fell = DEX, Pondium = INT, Kalguur = STR.</li>
+<li><b>Resource values:</b> Wheat 12, Corn 15, Pumpkin 18, Orgourd 21, Blue Zanthimum 24; ore 4/5/6/9/16; bars 16/19/24/37/64.</li>
+<li><b>Bars:</b> one ore becomes one bar; bars contribute about 4× shipment value and count 5× toward port quota compared with the ore.</li>
+</ul>
+<p class="small">Each worker now has an individual Level and Gold/hour field, so you can enter your actual roster instead of using an average level. Entering only a shipment target can accurately calculate the goods required, but not your personal Gold cost.</p>
+</div></div>
+</div>
+<script>
+const data=[
+["Wheat",12],["Corn",15],["Pumpkin",18],["Orgourd",21],["Blue Zanthimum",24],
+["Crimson Iron Ore",4],["Orichalcum Ore",5],["Petrified Amber Ore",6],["Bismuth Ore",9],["Verisium Ore",16],
+["Crimson Iron Bar",16],["Orichalcum Bar",19],["Petrified Amber Bar",24],["Bismuth Bar",37],["Verisium Bar",64]
+];
+const $=id=>document.getElementById(id);
+function fmt(n){if(n>=1e6)return (n/1e6).toFixed(2)+"M";if(n>=1e3)return (n/1e3).toFixed(1)+"k";return Math.round(n).toLocaleString()}
+const workerTypes=[
+  ["farmers","Farmers","farmer"],
+  ["miners","Miners","miner"],
+  ["smelters","Smelters","smelter"],
+  ["disenchanters","Disenchanters","disenchanter"]
+];
+
+function buildWorkerLists(){
+  const root=$("workerLists");
+  let out="";
+  workerTypes.forEach(([countId,label,key])=>{
+    const count=Math.max(0,Math.min(100,+$(countId).value||0));
+    if(!count) return;
+    out+=`<div style="margin:12px 0;padding:10px;background:#1d1d1d;border:1px solid #444">
+      <div style="font-weight:bold;color:#f0c36a;margin-bottom:8px">${label} (${count})</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">`;
+    for(let i=1;i<=count;i++){
+      out+=`<div style="border:1px solid #444;padding:7px;background:#252525">
+        <div style="font-size:12px;color:#aaa;margin-bottom:4px">${label.slice(0,-1)} ${i}</div>
+        <label>Level</label>
+        <input class="worker-level" data-type="${key}" data-index="${i}" type="number" min="1" max="10" value="10">
+        <label style="margin-top:5px">Gold / hour</label>
+        <input class="worker-wage" data-type="${key}" data-index="${i}" type="number" min="0" value="0">
+      </div>`;
+    }
+    out+=`</div></div>`;
+  });
+  root.innerHTML=out;
+}
+
+function workerCosts(){
+  let totals={farmers:0,miners:0,smelters:0,disenchanters:0};
+  document.querySelectorAll(".worker-wage").forEach(el=>{
+    const type=el.dataset.type;
+    totals[type]+=Math.max(0,+el.value||0);
+  });
+  return totals;
+}
+
+function calc(){
+ let target=Math.max(0,+$("target").value||0), dust=Math.max(0,+$("dust").value||0);
+ let raw=Math.max(0,target-dust);
+ let rolls=Math.min(40,Math.floor(raw/10000));
+ $("rolls").textContent=rolls;
+ $("raw").textContent=fmt(raw);
+ $("dustout").textContent=fmt(dust);
+ $("goldout").textContent=fmt(+$("gold").value||0);
+
+ let html="";
+ data.forEach(([n,v])=>{
+   let units=Math.ceil(raw/v);
+   html+=`<tr><td>${n}</td><td>${v}</td><td>${units.toLocaleString()}</td><td>${n.includes("Bar")?"1 bar per ore; higher shipment value":"Raw resource"}</td></tr>`;
+ });
+ $("rows").innerHTML=html;
+
+ let totals=workerCosts();
+ let hrs=1;
+ let workerGold=(totals.farmers+totals.miners+totals.smelters+totals.disenchanters)*hrs;
+ $("workerResult").innerHTML =
+   `<b>Entered worker wages:</b> ${fmt(workerGold)}/hour `+
+   `· Farmers ${fmt(totals.farmers)} · Miners ${fmt(totals.miners)} · `+
+   `Smelters ${fmt(totals.smelters)} · Disenchanters ${fmt(totals.disenchanters)}.`;
+
+ $("message").innerHTML= rolls>=40
+ ? `<span class="good">Maximum tattoo count reached.</span> ${$("port").value} determines the STR/DEX/INT pool for tattoos, or the corresponding Runegraft pool.`
+ : `<span class="warn">Below the 40-roll cap.</span> You need ${fmt(Math.max(0,4000000-raw))} more raw shipment value to reach 40 tattoos.`;
+}
+
+["farmers","miners","smelters","disenchanters"].forEach(x=>{
+  $(x).addEventListener("input",()=>{buildWorkerLists();calc();});
+});
+["target","port","dust","gold"].forEach(x=>$(x).addEventListener("input",calc));
+document.addEventListener("input",e=>{
+  if(e.target.classList.contains("worker-wage") || e.target.classList.contains("worker-level")) calc();
+});
+buildWorkerLists();
+calc();
+</script></body></html>
