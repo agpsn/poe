@@ -16,7 +16,16 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}input,se
 .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px}.stat{background:var(--panel2);border-radius:9px;padding:11px}.stat b{display:block;font-size:18px;margin-top:3px}
 table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--border);padding:8px;text-align:left}th{color:var(--muted);font-weight:600}.num{text-align:right}.success{color:var(--ok)}.error{color:var(--bad)}.warning{color:var(--warn)}.notice{padding:10px;border-radius:8px;background:var(--panel2);margin-top:10px}.actions{display:flex;gap:8px;flex-wrap:wrap}.small{font-size:12px;color:var(--muted)}
 .type-icon{width:28px;height:28px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:6px;image-rendering:auto}
-.page-icon{width:42px;height:42px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:8px}.shipment-input{max-width:190px}.nowrap{white-space:nowrap}
+.page-icon{width:42px;height:42px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:8px}
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
+.disenchant-list{display:grid;gap:8px;margin-top:12px}
+.disenchant-row{display:grid;grid-template-columns:32px 150px minmax(180px,1fr) 100px;gap:8px;align-items:center}
+.runtime-card{border:1px solid var(--border)}
+.unique-picker{position:relative}
+.unique-results{display:none;position:absolute;z-index:50;left:0;right:0;top:100%;max-height:260px;overflow:auto;background:var(--panel,#fff);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.unique-suggestion{display:block;width:100%;text-align:left;border:0;background:transparent;padding:7px 9px;border-radius:5px;cursor:pointer}
+.unique-suggestion:hover{background:rgba(127,127,127,.14)}
+@media(max-width:700px){.disenchant-row{grid-template-columns:28px 1fr}.disenchant-row input,.disenchant-row select{width:100%}}.shipment-input{max-width:190px}.nowrap{white-space:nowrap}
 @media(max-width:650px){header{padding:18px 12px 10px}main{padding:0 12px 25px}.tabs{position:static}.row{grid-template-columns:1fr 95px}table{font-size:12px}th,td{padding:6px}}
 </style>
 </head>
@@ -44,11 +53,11 @@ const cats=[
 {id:"mapping",icon:"",name:"Mapping",max:18,items:[["Map 1",6],["Map 2",6],["Map 3",6]]},
 {id:"shipping",icon:"",name:"Shipping",max:18,items:[["Ship 1",6],["Ship 2",6],["Ship 3",6]]}
 ];
-const defaults={duration:0,currentGold:0,otherGold:0,target:0};
-if(!localStorage.getItem("kingsmarchCalc_v3")){localStorage.removeItem("kingsmarchCalc");localStorage.setItem("kingsmarchCalc_v3","1");}
+const defaults={duration:0,currentGold:0,otherGold:0,target:0,treasury:0};
+if(!localStorage.getItem("kingsmarchCalc_v4")){localStorage.removeItem("kingsmarchCalc");localStorage.setItem("kingsmarchCalc_v4","1");}
 let state=JSON.parse(localStorage.getItem("kingsmarchCalc")||"null")||{
 ship:{target:0,reserve:Object.fromEntries(resources.map(r=>[r[0],0])),inventory:Object.fromEntries(resources.map(r=>[r[0],0]))},
-work:{},duration:1,currentGold:0,otherGold:0,tab:"shipment"
+work:{},workers:{},materials:{},plots:{},mapCount:0,mapTier:1,disenchantItems:[],duration:0,currentGold:0,otherGold:0,treasury:0,tab:"shipment"
 };
 cats.forEach(c=>c.items.forEach(([name,max])=>{
  if(state.work[c.id+"|"+name]===undefined)state.work[c.id+"|"+name]=0;
@@ -63,6 +72,9 @@ document.getElementById("tabs").innerHTML=a.map(([id,t])=>`<button class="tab ${
 }
 function render(){tabs();let a=document.getElementById("app");if(state.tab==="shipment")a.innerHTML=shipment();else if(state.tab==="totals")a.innerHTML=totals();else a.innerHTML=workPage(cats.find(c=>c.id===state.tab));bind()}
 function bind(){
+document.querySelectorAll("[data-material]").forEach(el=>el.oninput=()=>{state.materials=state.materials||{};state.materials[el.dataset.material]=Number(el.value)||0;save()});
+document.querySelectorAll("[data-plot]").forEach(el=>el.onchange=()=>{state.plots=state.plots||{};state.plots[el.dataset.plot]=el.value;save()});
+document.querySelectorAll("[data-map-input]").forEach(el=>el.oninput=()=>{state[el.dataset.mapInput==="count"?"mapCount":"mapTier"]=Number(el.value)||0;save()});
 document.querySelectorAll("[data-path]").forEach(el=>el.oninput=()=>{
 let p=el.dataset.path.split("."),o=state;
 for(let i=0;i<p.length-1;i++)o=o[p[i]];
@@ -70,32 +82,13 @@ o[p[p.length-1]]=Number(el.value)||0;
 save();
 if(state.tab==="shipment") updateShipmentPreview();
 else if(state.tab==="totals") updateTotalsPreview();
-else render();
+else updateRuntimePanels();
 });
 }
 function updateTotalsPreview(){
-const rows=cats.map(c=>{let workers=c.items.reduce((s,[n])=>s+activeCount(c.id+"|"+n),0);return {c,workers,h:catHourly(c)}});
-const hourly=rows.reduce((s,r)=>s+r.h,0),hire=rows.reduce((s,r)=>s+r.hire,0),duration=Number(state.duration)||0;
-const wages=hourly*duration,other=Number(state.otherGold)||0,required=hire+wages+other,current=Number(state.currentGold)||0,remain=current-required;
-const els={
-hourly:document.querySelector(".tot-hourly"),wages:document.querySelector(".tot-wages"),
-required:document.querySelector(".tot-required"),remaining:document.querySelector(".tot-remaining"),workers:document.querySelector(".tot-workers")
-};
-if(els.hourly)els.hourly.textContent=fmt(hourly);
-if(els.wages)els.wages.textContent=fmt(wages);
-if(els.required)els.required.textContent=fmt(required);
-if(els.remaining){els.remaining.textContent=fmt(Math.abs(remain));els.remaining.className=remain>=0?"success":"error"}
-if(els.workers)els.workers.textContent=fmt(globalWorkers())+" / 90";
-const table=document.querySelector(".totals-table");
-if(table){
-rows.forEach((r,i)=>{
-const cells=table.querySelectorAll("tbody tr")[i]?.querySelectorAll("td");
-if(!cells)return;
-cells[1].textContent=fmt(r.workers);cells[3].textContent=fmt(r.h);cells[4].textContent=fmt(r.h*duration);cells[5].textContent=fmt(r.hire);
-});
-const foot=table.querySelector("tbody tr:last-child")?.querySelectorAll("th");
-if(foot){foot[1].textContent=fmt(globalWorkers());foot[3].textContent=fmt(hourly);foot[4].textContent=fmt(wages)}
-}
+ const hourly=cats.reduce((sum,c)=>sum+catHourly(c),0), treasury=Number(state.treasury)||0, runtime=hourly>0?treasury/hourly:Infinity;
+ const h=document.querySelector(".tot-hourly"),r=document.querySelector(".tot-runtime"),w=document.querySelector(".tot-workers");
+ if(h)h.textContent=fmt(hourly); if(r)r.textContent=formatHours(runtime); if(w)w.textContent=fmt(globalWorkers())+" / 90";
 }
 function updateShipmentPreview(){
 const inv=state.ship.inventory,res=state.ship.reserve,target=Number(state.ship.target)||0;
@@ -163,11 +156,79 @@ q[i]=0}
 if(target<=2500 && n<=16)dfs(0,target,Array(n).fill(0),0);
 let q=best.q,total=best.v;return {qty:q,total,items:q.reduce((s,x)=>s+x,0)};
 }
+
+function formatHours(h){
+ if(!isFinite(h)) return "—";
+ const mins=Math.max(0,Math.round(h*60));
+ const d=Math.floor(mins/1440), hr=Math.floor((mins%1440)/60), m=mins%60;
+ return (d?d+"d ":"")+(hr?hr+"h ":"")+(m||(!d&&!hr)?m+"m":"");
+}
+function treasuryRuntime(c){
+ const hourly=catHourly(c), treasury=Math.max(0,Number(state.treasury)||0);
+ return hourly>0?treasury/hourly:Infinity;
+}
+function updateRuntimePanels(){
+ const c=cats.find(x=>x.id===state.tab); if(!c)return;
+ const hourly=catHourly(c), runtime=treasuryRuntime(c);
+ const h=document.querySelector(".runtime-hourly"), r=document.querySelector(".runtime-hours"), n=document.querySelector(".runtime-note");
+ if(h)h.textContent=fmt(hourly)+"/hr";
+ if(r)r.textContent=formatHours(runtime);
+ if(n)n.textContent=hourly>0?"Using the shared Kingsmarch Treasury, this operation can be funded for approximately "+formatHours(runtime)+".":"Enter wages for active workers to calculate Treasury runtime.";
+}
+const uniqueCatalog={"Helmet":["Abyssus","Asenath's Chant","Devoto's Devotion","Eternal Damnation","Hrimnor's Resolve","Indigon","Lightpoacher","The Gull","The Three Dragons","Viridi's Veil"],"Body Armour":["Briskwrap","Carcass Jack","Cloak of Flame","Doppelgänger Guise","Kaom's Heart","Shavronne's Wrappings","Skin of the Lords","Tabula Rasa","The Covenant","The Ivory Tower"],"Gloves":["Asenath's Gentle Touch","Hrimsorrow","Null and Void","Shaper's Touch","Southbound","Tombfist","Thunderfist","Voidbringer"],"Boots":["Atziri's Step","Bubonic Trail","Kaom's Roots","Seven-League Step","Stampede","The Sorrow of the Divine","Voidwalker","Windscream"],"Weapon":["Cospri's Malice","Doomfletch's Prism","Ephemeral Edge","Headhunter","Mjölner","Nebuloch","Starforge","The Saviour","Void Battery"],"Bow":["Death's Opus","Darkscorn","Lioneye's Glare","Quill Rain","Windripper","Xoph's Nurture"],"Shield":["Aegis Aurora","Atziri's Reflection","Prism Guardian","Saffell's Frame","The Surrender"],"Quiver":["Maloney's Mechanism","Rigwald's Quills","Soul Strike","The Skirmish","Voidfletcher"],"Amulet":["Astramentis","Crystallised Omniscience","Presence of Chayula","Replica Dragonfang's Flight","The Aul's Uprising","The Pandemonius"],"Ring":["Call of the Brotherhood","Circle of Guilt","Mark of the Elder","Ming's Heart","Nostalgia","Profane Proxy","Shavronne's Revelation","Ventor's Gamble"],"Belt":["Auxium","Bisco's Leash","Headhunter","Mageblood","Meginord's Girdle","Perseverance","Stygian Vise","The Torrent's Reclamation"],"Flask":["Atziri's Promise","Bottled Faith","Dying Sun","Forbidden Taste","Lion's Roar","Taste of Hate","The Overflowing Chalice"],"Jewel":["Forbidden Flame","Forbidden Flesh","Inspired Learning","Megalomaniac","Watcher's Eye","Thread of Hope"]};
+function setDisenchantRows(v){
+ const n=Math.max(0,Math.min(100,Math.floor(Number(v)||0)));
+ state.disenchantItems=state.disenchantItems||[];
+ while(state.disenchantItems.length<n)state.disenchantItems.push({slot:"Helmet",unique:"",qty:1});
+ state.disenchantItems=state.disenchantItems.slice(0,n); save(); render();
+}
+function setDisenchant(i,p,v){
+ if(!state.disenchantItems?.[i])return;
+ state.disenchantItems[i][p]=p==="qty"?Math.max(1,Number(v)||1):v; save();
+}
+function uniqueOptionsForSlot(slot){
+ return uniqueCatalog[slot]||[];
+}
+function renderUniqueSuggestions(i,slot,query){
+ const box=document.getElementById("unique-results-"+i);
+ if(!box)return;
+ const q=(query||"").trim().toLowerCase();
+ const vals=uniqueOptionsForSlot(slot).filter(n=>!q||n.toLowerCase().includes(q)).slice(0,20);
+ box.innerHTML=vals.length?vals.map(n=>`<button type="button" class="unique-suggestion" onclick="pickUnique(${i},'${esc(n).replace(/'/g,"&#39;")}')">${esc(n)}</button>`).join(""):`<div class="small">No matching unique in the built-in list. You can still enter the exact name manually.</div>`;
+ box.style.display="block";
+}
+function pickUnique(i,name){
+ setDisenchant(i,"unique",name);
+ const input=document.getElementById("unique-input-"+i); if(input)input.value=name;
+ const box=document.getElementById("unique-results-"+i); if(box)box.style.display="none";
+}
+function disenchantInputs(){
+ const rows=state.disenchantItems||[];
+ const slots=["Helmet","Body Armour","Gloves","Boots","Weapon","Bow","Shield","Quiver","Amulet","Ring","Belt","Flask","Jewel"];
+ return `<div class="card"><h3>👻 Disenchant Queue</h3>
+ <div class="field"><label>Number of item types</label><input type="number" min="0" max="100" step="1" value="${rows.length}" onchange="setDisenchantRows(this.value)"></div>
+ <div class="small">Choose the item slot first. Then type part of the unique name — matching uniques appear immediately. The list is filtered by slot.</div>
+ <div class="disenchant-list">${rows.map((x,i)=>`<div class="disenchant-row"><strong>${i+1}</strong>
+ <select onchange="setDisenchant(${i},'slot',this.value);render()">${slots.map(v=>`<option ${x.slot===v?"selected":""}>${v}</option>`).join("")}</select>
+ <div class="unique-picker"><input id="unique-input-${i}" type="search" autocomplete="off" placeholder="Search ${x.slot||"unique"}..." value="${esc(x.unique||"")}" onfocus="renderUniqueSuggestions(${i},'${esc(x.slot||"Helmet")}',this.value)" oninput="renderUniqueSuggestions(${i},'${esc(x.slot||"Helmet")}',this.value)" onchange="setDisenchant(${i},'unique',this.value)"><div id="unique-results-${i}" class="unique-results"></div></div>
+ <input type="number" min="1" step="1" value="${x.qty||1}" onchange="setDisenchant(${i},'qty',this.value)">
+ </div>`).join("")}</div></div>`;
+}
+function operationInputs(c){
+ if(c.id==="mining") return `<div class="card"><h3>⛏️ Current ore</h3><div class="mini-grid">${c.items.map(([n])=>`<div class="field"><label>${esc(n)} Ore</label><input type="number" min="0" step="1" data-material="${c.id}|${n}" value="${state.materials?.[c.id+"|"+n]||0}"></div>`).join("")}</div><div class="small">Ore stock is tracked here; production-time estimates will use the game's current rates rather than guessing.</div></div>`;
+ if(c.id==="smelting") return `<div class="card"><h3>🔥 Ore to smelt</h3><div class="mini-grid">${c.items.map(([n])=>`<div class="field"><label>${esc(n)} Ore</label><input type="number" min="0" step="1" data-material="${c.id}|${n}" value="${state.materials?.[c.id+"|"+n]||0}"></div>`).join("")}</div></div>`;
+ if(c.id==="farming") return `<div class="card"><h3>🌾 Plot setup</h3><div class="mini-grid">${c.items.map(([n])=>`<div class="field"><label>${esc(n)} crop</label><select data-plot="${c.id}|${n}">${["Wheat","Corn","Pumpkin","Orgourd","Blue Zanthimum"].map(v=>`<option ${state.plots?.[c.id+"|"+n]===v?"selected":""}>${v}</option>`).join("")}</select></div>`).join("")}</div></div>`;
+ if(c.id==="mapping") return `<div class="card"><h3>🗺️ Mapping operation</h3><div class="mini-grid"><div class="field"><label>Maps available</label><input type="number" min="0" step="1" data-map-input="count" value="${state.mapCount||0}"></div><div class="field"><label>Map tier</label><input type="number" min="1" max="17" step="1" data-map-input="tier" value="${state.mapTier||1}"></div></div></div>`;
+ if(c.id==="shipping") return `<div class="card"><h3>🚢 Shipping operation</h3><div class="small">Build the shipment on the Shipment tab. This page uses the assigned ship crew wages and Treasury to calculate how long that crew can remain funded.</div></div>`;
+ return "";
+}
 function workPage(c){
 let total=c.items.reduce((s,[n])=>s+activeCount(c.id+"|"+n),0);
 let global=globalWorkers(),over=total>c.max||global>90;
 return `<div class="card"><h2>${iconImg(c.id,"page-icon")}${c.name}</h2><div class="notice">Workers are <b>inactive until their Wage / hour is greater than 0</b>. Only active workers count toward the 90-worker global limit and gold totals.</div><div class="statgrid"><div class="stat">Workers<b>${fmt(total)} / ${c.max}</b></div><div class="stat">Global<b>${fmt(global)} / 90</b></div><div class="stat">Hourly wages<b>${fmt(catHourly(c))}</b></div></div>
 ${over?`<div class="notice error">⚠️ Invalid allocation: ${total>c.max?c.name+" exceeds its maximum. ":""}${global>90?"Global workforce exceeds 90.":""}</div>`:""}
+<div class="card runtime-card"><h3>💰 Treasury Runtime</h3><div class="statgrid"><div class="stat">Active wages<b class="runtime-hourly">${fmt(catHourly(c))}/hr</b></div><div class="stat">Treasury lasts<b class="runtime-hours">${formatHours(treasuryRuntime(c))}</b></div></div><div class="small runtime-note">${catHourly(c)>0?"Using the shared Kingsmarch Treasury, this operation can be funded for approximately "+formatHours(treasuryRuntime(c))+".":"Enter wages for active workers to calculate Treasury runtime."}</div><div class="small">Treasury Gold is entered once on the 📊 Totals tab and is shared by every Kingsmarch activity.</div></div>
+${c.id==="disenchanting"?disenchantInputs():operationInputs(c)}
 <div class="card" style="margin-top:14px"><h3>Assignments</h3>${c.items.map(([name,max])=>assignment(c,name,max)).join("")}</div></div>`;
 }
 function assignment(c,name,max){
@@ -179,70 +240,19 @@ return `<div class="assignment"><div class="row"><strong>${esc(name)} <span clas
 ${count?`<div class="workers">${workers.map((w,i)=>`<div><strong>Worker ${i+1}</strong><div class="field"><label>Level / rank</label><input type="number" min="0" step="1" value="${w.level}" onchange="setWorker('${key}',${i},'level',this.value)"></div><div class="field"><label>Wage / hour</label><input type="number" min="0" step="0.01" value="${w.wage}" onchange="setWorker('${key}',${i},'wage',this.value)"></div></div>`).join("")}</div>`:"<div class='small'>No workers assigned.</div>"}</div>`;
 }
 function setCount(key,v){let n=Math.max(0,Math.floor(Number(v)||0));let c=cats.find(c=>c.items.some(x=>c.id+"|"+x[0]===key)),item=c.items.find(x=>c.id+"|"+x[0]===key);n=Math.min(n,item[1]);let projected=globalWorkers()-activeCount(key)+((state.workers?.[key]||[]).slice(0,n).filter(z=>(Number(z.wage)||0)>0).length);if(projected>90){alert("Global workforce limit is 90 active workers. Reduce another assignment or remove wages first.");return}state.work[key]=n;save();render()}
-function setWorker(key,i,p,v){if(!state.workers)state.workers={};if(!state.workers[key])state.workers[key]=[];state.workers[key][i] ||= {level:1,hire:0,wage:0};state.workers[key][i][p]=Number(v)||0;save();render()}
+function setWorker(key,i,p,v){if(!state.workers)state.workers={};if(!state.workers[key])state.workers[key]=[];state.workers[key][i] ||= {level:1,wage:0};state.workers[key][i][p]=Number(v)||0;save();render()}
 function activeCount(key){let w=state.workers?.[key]||[],count=state.work[key]||0;return w.slice(0,count).filter(z=>(Number(z.wage)||0)>0).length}
 function globalWorkers(){return cats.reduce((s,c)=>s+c.items.reduce((x,[n])=>x+activeCount(c.id+"|"+n),0),0)}
 function catHourly(c){return c.items.reduce((s,[n])=>{let k=c.id+"|"+n,w=state.workers?.[k]||[],count=state.work[k]||0;return s+w.slice(0,count).reduce((a,z)=>a+(Number(z.wage)||0),0)},0)}
 function totals(){
-let rows=cats.map(c=>{let workers=c.items.reduce((s,[n])=>s+activeCount(c.id+"|"+n),0);return {c,workers,h:catHourly(c)}});
-let hourly=rows.reduce((s,r)=>s+r.h,0),duration=Number(state.duration)||0,wages=hourly*duration,other=Number(state.otherGold)||0,required=wages+other,current=Number(state.currentGold)||0,remain=current-required;
-return `<div class="grid"><div class="card wide"><h2>📊 Workforce totals</h2><div class="statgrid"><div class="stat">Active workers<b class="tot-workers">${fmt(globalWorkers())} / 90</b></div><div class="stat">Hourly wages<b class="tot-hourly">${fmt(hourly)}</b></div><div class="stat">Voyage wages<b class="tot-wages">${fmt(wages)}</b></div></div>
-<div style="overflow:auto;margin-top:14px"><table class="totals-table"><thead><tr><th>Work Type</th><th class="num">Workers</th><th class="num">Maximum</th><th class="num">Hourly wages</th><th class="num">Voyage wages</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.c.icon} ${r.c.name}</td><td class="num">${fmt(r.workers)}</td><td class="num">${r.c.max}</td><td class="num">${fmt(r.h)}</td><td class="num">${fmt(r.h*duration)}</td></tr>`).join("")}<tr><th>TOTAL</th><th class="num">${fmt(globalWorkers())}</th><th class="num">90</th><th class="num">${fmt(hourly)}</th><th class="num">${fmt(wages)}</th></tr></tbody></table></div></div>
-<div class="card"><h2>💰 Gold</h2><div class="field"><label>Voyage/process duration (hours)</label><input type="number" min="0" step="0.01" data-path="duration" value="${state.duration}"></div><div class="field"><label>Other one-time gold costs</label><input type="number" min="0" step="1" data-path="otherGold" value="${state.otherGold}"></div><div class="field"><label>Current Gold</label><input type="number" min="0" step="1" data-path="currentGold" value="${state.currentGold}"></div><div class="statgrid"><div class="stat">Total gold required<b class="tot-required">${fmt(required)}</b></div><div class="stat">${remain>=0?"Gold remaining":"Gold shortage"}<b class="${remain>=0?"success":"error"} tot-remaining">${fmt(Math.abs(remain))}</b></div></div></div>
-<div class="card"><h2>💾 Save / Load</h2>
-<div class="actions">
-<button onclick="exportData()">⬇️ Export Save</button>
-<button onclick="document.getElementById('importFile').click()">⬆️ Import Save</button>
-<button onclick="resetAll()">🔄 Reset Everything</button>
-</div>
-<input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importData(this)">
-<div class="small" style="margin-top:10px">Export creates a JSON backup of your shipment, workforce, worker details, and gold settings. Import restores it later, including on another browser/device.</div></div>
-<div class="card"><h2>⚙️ Workforce Tools</h2><div class="actions"><button onclick="demoWorkers()">Load demo workers</button><button onclick="clearWorkers()">Clear all workers</button></div></div></div>`;
+ let rows=cats.map(c=>({c,workers:c.items.reduce((s,[n])=>s+activeCount(c.id+"|"+n),0),h:catHourly(c)}));
+ let hourly=rows.reduce((s,r)=>s+r.h,0),treasury=Number(state.treasury)||0,other=Number(state.otherGold)||0,runtime=hourly>0?treasury/hourly:Infinity;
+ return `<div class="grid"><div class="card wide"><h2>📊 Workforce totals</h2><div class="statgrid"><div class="stat">Active workers<b class="tot-workers">${fmt(globalWorkers())} / 90</b></div><div class="stat">Hourly wages<b class="tot-hourly">${fmt(hourly)}</b></div><div class="stat">Treasury runtime<b class="tot-runtime">${formatHours(runtime)}</b></div></div>
+ <div style="overflow:auto;margin-top:14px"><table class="totals-table"><thead><tr><th>Work Type</th><th class="num">Workers</th><th class="num">Maximum</th><th class="num">Hourly wages</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.c.name}</td><td class="num">${fmt(r.workers)}</td><td class="num">${r.c.max}</td><td class="num">${fmt(r.h)}</td></tr>`).join("")}<tr><th>TOTAL</th><th class="num">${fmt(globalWorkers())}</th><th class="num">90</th><th class="num">${fmt(hourly)}</th></tr></tbody></table></div></div>
+ <div class="card"><h2>💰 Treasury</h2><div class="field"><label>Kingsmarch Treasury Gold</label><input type="number" min="0" step="1" data-path="treasury" value="${state.treasury||0}"></div><div class="field"><label>Other one-time gold costs</label><input type="number" min="0" step="1" data-path="otherGold" value="${state.otherGold}"></div><div class="statgrid"><div class="stat">Treasury lasts<b class="tot-runtime">${formatHours(runtime)}</b></div><div class="stat">Treasury gold<b>${fmt(treasury)}</b></div></div><div class="small">Runtime is based on current hourly wages. Each work tab also tracks its own operation inputs.</div></div>
+ <div class="card"><h2>💾 Save / Load</h2><div class="actions"><button onclick="exportData()">⬇️ Export Save</button><button onclick="document.getElementById('importFile').click()">⬆️ Import Save</button><button onclick="resetAll()">🔄 Reset Everything</button></div><input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"><div class="small" style="margin-top:10px">Export includes shipment, workforce, worker details, operation inputs, disenchant queue, and Treasury.</div></div>
+ <div class="card"><h2>⚙️ Workforce Tools</h2><div class="actions"><button onclick="demoWorkers()">Load demo workers</button><button onclick="clearWorkers()">Clear all workers</button></div></div></div>`;
 }
-function demoShip(){
-const ranges=[
-[20,150],[10,120],[8,100],[5,80],[3,60],
-[5,60],[4,45],[3,35],[2,28],[1,20],
-[20,180],[15,150],[10,120],[8,100],[5,80],[50,500]
-];
-resources.forEach((r,i)=>{
-const [min,max]=ranges[i];
-state.ship.inventory[r[0]]=Math.floor(Math.random()*(max-min+1))+min;
-state.ship.reserve[r[0]]=0;
-});
-state.ship.target=Math.floor(Math.random()*1801)+200;
-save();render()}
-function resetShip(){state.ship={target:0,reserve:Object.fromEntries(resources.map(r=>[r[0],0])),inventory:Object.fromEntries(resources.map(r=>[r[0],0]))};save();render()}
-function demoWorkers(){
-state.workers=state.workers||{};
-cats.forEach(c=>c.items.forEach(([n,max])=>{
-const k=c.id+"|"+n;
-let count=Math.floor(Math.random()*(max+1));
-state.work[k]=count;
-state.workers[k]=Array.from({length:count},()=>({
-level:Math.floor(Math.random()*10)+1,
-wage:Math.floor(Math.random()*81)+20
-}));
-}));
-
-// Keep the random demo allocation within the 90-worker global limit.
-let excess=globalAssignedWorkers()-90;
-if(excess>0){
-const keys=cats.flatMap(c=>c.items.map(([n])=>c.id+"|"+n));
-for(const k of keys){
-if(excess<=0)break;
-const cut=Math.min(state.work[k]||0,excess);
-state.work[k]-=cut;
-state.workers[k].splice(state.work[k]);
-excess-=cut;
-}
-}
-save();render();
-}
-function globalAssignedWorkers(){
-return cats.reduce((s,c)=>s+c.items.reduce((x,[n])=>x+(state.work[c.id+"|"+n]||0),0),0)
-}
-function clearWorkers(){cats.forEach(c=>c.items.forEach(([n])=>{state.work[c.id+"|"+n]=0;if(state.workers)state.workers[c.id+"|"+n]=[]}));save();render()}
 function exportData(){
 const payload={version:2,exportedAt:new Date().toISOString(),data:state};
 const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -279,8 +289,7 @@ work:{...(data.work||{})},
 workers:{...(data.workers||{})},
 duration:Number(data.duration)||0,
 currentGold:Number(data.currentGold)||0,
-otherGold:Number(data.otherGold)||0,
-tab:"totals"
+otherGold:Number(data.otherGold)||0,treasury:Number(data.treasury)||0,materials:{...(data.materials||{})},plots:{...(data.plots||{})},mapCount:Number(data.mapCount)||0,mapTier:Number(data.mapTier)||1,disenchantItems:Array.isArray(data.disenchantItems)?data.disenchantItems:[],tab:"totals"
 };
 cats.forEach(c=>c.items.forEach(([name,max])=>{
 const key=c.id+"|"+name;
