@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kingsmarch Calculator</title>
+<title>Kingsmarch Shipment + Workforce Calculator</title>
 <style>
 :root{--bg:#0d1117;--panel:#161b22;--panel2:#1f2630;--text:#e6edf3;--muted:#9da7b3;--border:#303846;--accent:#d7a84a;--ok:#3fb950;--bad:#f85149;--warn:#d29922}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
@@ -21,6 +21,16 @@ table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--bo
 .disenchant-list{display:grid;gap:8px;margin-top:12px}
 .disenchant-row{display:grid;grid-template-columns:32px 150px minmax(180px,1fr) 100px;gap:8px;align-items:center}
 .runtime-card{border:1px solid var(--border)}
+.category-toggle-card{border:1px solid var(--border)}
+.toggle-line{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.switch{position:relative;display:inline-block;width:52px;height:28px;flex:0 0 auto}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:#777;border-radius:28px;transition:.2s}
+.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
+.switch input:checked+.slider{background:#28a745}
+.switch input:checked+.slider:before{transform:translateX(24px)}
+.output-section{border-top:1px solid var(--border);padding-top:12px;margin-top:12px}
+.output-row{display:grid;grid-template-columns:minmax(150px,1fr) auto minmax(180px,1fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(127,127,127,.15)}
 .unique-picker{position:relative}
 .unique-results{display:none;position:absolute;z-index:50;left:0;right:0;top:100%;max-height:260px;overflow:auto;background:var(--panel,#fff);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .unique-suggestion{display:block;width:100%;text-align:left;border:0;background:transparent;padding:7px 9px;border-radius:5px;cursor:pointer}
@@ -57,7 +67,7 @@ const defaults={duration:0,currentGold:0,otherGold:0,target:0,treasury:0};
 if(!localStorage.getItem("kingsmarchCalc_v4")){localStorage.removeItem("kingsmarchCalc");localStorage.setItem("kingsmarchCalc_v4","1");}
 let state=JSON.parse(localStorage.getItem("kingsmarchCalc")||"null")||{
 ship:{target:0,reserve:Object.fromEntries(resources.map(r=>[r[0],0])),inventory:Object.fromEntries(resources.map(r=>[r[0],0]))},
-work:{},workers:{},materials:{},plots:{},mapCount:0,mapTier:1,disenchantItems:[],duration:0,currentGold:0,otherGold:0,treasury:0,tab:"shipment"
+work:{},workers:{},materials:{},plots:{},mapCount:0,mapTier:1,disenchantItems:[],duration:0,currentGold:0,otherGold:0,treasury:0,enabled:{mining:true,smelting:true,farming:true,disenchanting:true,mapping:true,shipping:true},tab:"shipment"
 };
 cats.forEach(c=>c.items.forEach(([name,max])=>{
  if(state.work[c.id+"|"+name]===undefined)state.work[c.id+"|"+name]=0;
@@ -157,6 +167,11 @@ if(target<=2500 && n<=16)dfs(0,target,Array(n).fill(0),0);
 let q=best.q,total=best.v;return {qty:q,total,items:q.reduce((s,x)=>s+x,0)};
 }
 
+function toggleCategory(id,enabled){
+ state.enabled=state.enabled||{};
+ state.enabled[id]=!!enabled;
+ save(); render();
+}
 function formatHours(h){
  if(!isFinite(h)) return "—";
  const mins=Math.max(0,Math.round(h*60));
@@ -227,6 +242,7 @@ let total=c.items.reduce((s,[n])=>s+activeCount(c.id+"|"+n),0);
 let global=globalWorkers(),over=total>c.max||global>90;
 return `<div class="card"><h2>${iconImg(c.id,"page-icon")}${c.name}</h2><div class="notice">Workers are <b>inactive until their Wage / hour is greater than 0</b>. Only active workers count toward the 90-worker global limit and gold totals.</div><div class="statgrid"><div class="stat">Workers<b>${fmt(total)} / ${c.max}</b></div><div class="stat">Global<b>${fmt(global)} / 90</b></div><div class="stat">Hourly wages<b>${fmt(catHourly(c))}</b></div></div>
 ${over?`<div class="notice error">⚠️ Invalid allocation: ${total>c.max?c.name+" exceeds its maximum. ":""}${global>90?"Global workforce exceeds 90.":""}</div>`:""}
+<div class="card category-toggle-card"><div class="toggle-line"><div><h3 style="margin:0">${c.name}</h3><div class="small">Enable or disable this activity without changing its worker assignments.</div></div><label class="switch"><input type="checkbox" ${state.enabled?.[c.id]===false?"":"checked"} onchange="toggleCategory('${c.id}',this.checked)"><span class="slider"></span></label></div></div>
 <div class="card runtime-card"><h3>💰 Treasury Runtime</h3><div class="statgrid"><div class="stat">Active wages<b class="runtime-hourly">${fmt(catHourly(c))}/hr</b></div><div class="stat">Treasury lasts<b class="runtime-hours">${formatHours(treasuryRuntime(c))}</b></div></div><div class="small runtime-note">${catHourly(c)>0?"Using the shared Kingsmarch Treasury, this operation can be funded for approximately "+formatHours(treasuryRuntime(c))+".":"Enter wages for active workers to calculate Treasury runtime."}</div><div class="small">Treasury Gold is entered once on the 📊 Totals tab and is shared by every Kingsmarch activity.</div></div>
 ${c.id==="disenchanting"?disenchantInputs():operationInputs(c)}
 <div class="card" style="margin-top:14px"><h3>Assignments</h3>${c.items.map(([name,max])=>assignment(c,name,max)).join("")}</div></div>`;
@@ -242,16 +258,8 @@ ${count?`<div class="workers">${workers.map((w,i)=>`<div><strong>Worker ${i+1}</
 function setCount(key,v){let n=Math.max(0,Math.floor(Number(v)||0));let c=cats.find(c=>c.items.some(x=>c.id+"|"+x[0]===key)),item=c.items.find(x=>c.id+"|"+x[0]===key);n=Math.min(n,item[1]);let projected=globalWorkers()-activeCount(key)+((state.workers?.[key]||[]).slice(0,n).filter(z=>(Number(z.wage)||0)>0).length);if(projected>90){alert("Global workforce limit is 90 active workers. Reduce another assignment or remove wages first.");return}state.work[key]=n;save();render()}
 function setWorker(key,i,p,v){if(!state.workers)state.workers={};if(!state.workers[key])state.workers[key]=[];state.workers[key][i] ||= {level:1,wage:0};state.workers[key][i][p]=Number(v)||0;save();render()}
 function activeCount(key){let w=state.workers?.[key]||[],count=state.work[key]||0;return w.slice(0,count).filter(z=>(Number(z.wage)||0)>0).length}
-function globalWorkers(){return cats.reduce((s,c)=>s+c.items.reduce((x,[n])=>x+activeCount(c.id+"|"+n),0),0)}
-function catHourly(c){return c.items.reduce((s,[n])=>{let k=c.id+"|"+n,w=state.workers?.[k]||[],count=state.work[k]||0;return s+w.slice(0,count).reduce((a,z)=>a+(Number(z.wage)||0),0)},0)}
-function totals(){
- let rows=cats.map(c=>({c,workers:c.items.reduce((s,[n])=>s+activeCount(c.id+"|"+n),0),h:catHourly(c)}));
- let hourly=rows.reduce((s,r)=>s+r.h,0),treasury=Number(state.treasury)||0,other=Number(state.otherGold)||0,runtime=hourly>0?treasury/hourly:Infinity;
- return `<div class="grid"><div class="card wide"><h2>📊 Workforce totals</h2><div class="statgrid"><div class="stat">Active workers<b class="tot-workers">${fmt(globalWorkers())} / 90</b></div><div class="stat">Hourly wages<b class="tot-hourly">${fmt(hourly)}</b></div><div class="stat">Treasury runtime<b class="tot-runtime">${formatHours(runtime)}</b></div></div>
- <div style="overflow:auto;margin-top:14px"><table class="totals-table"><thead><tr><th>Work Type</th><th class="num">Workers</th><th class="num">Maximum</th><th class="num">Hourly wages</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.c.name}</td><td class="num">${fmt(r.workers)}</td><td class="num">${r.c.max}</td><td class="num">${fmt(r.h)}</td></tr>`).join("")}<tr><th>TOTAL</th><th class="num">${fmt(globalWorkers())}</th><th class="num">90</th><th class="num">${fmt(hourly)}</th></tr></tbody></table></div></div>
- <div class="card"><h2>💰 Treasury</h2><div class="field"><label>Kingsmarch Treasury Gold</label><input type="number" min="0" step="1" data-path="treasury" value="${state.treasury||0}"></div><div class="field"><label>Other one-time gold costs</label><input type="number" min="0" step="1" data-path="otherGold" value="${state.otherGold}"></div><div class="statgrid"><div class="stat">Treasury lasts<b class="tot-runtime">${formatHours(runtime)}</b></div><div class="stat">Treasury gold<b>${fmt(treasury)}</b></div></div><div class="small">Runtime is based on current hourly wages. Each work tab also tracks its own operation inputs.</div></div>
- <div class="card"><h2>💾 Save / Load</h2><div class="actions"><button onclick="exportData()">⬇️ Export Save</button><button onclick="document.getElementById('importFile').click()">⬆️ Import Save</button><button onclick="resetAll()">🔄 Reset Everything</button></div><input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"><div class="small" style="margin-top:10px">Export includes shipment, workforce, worker details, operation inputs, disenchant queue, and Treasury.</div></div>
- <div class="card"><h2>⚙️ Workforce Tools</h2><div class="actions"><button onclick="demoWorkers()">Load demo workers</button><button onclick="clearWorkers()">Clear all workers</button></div></div></div>`;
+function globalWorkers(){
+ return cats.reduce((sum,c)=>sum+(state.enabled?.[c.id]===false?0:c.items.reduce((s,[n])=>s+activeCount(c.id+"|"+n),0)),0);
 }
 function exportData(){
 const payload={version:2,exportedAt:new Date().toISOString(),data:state};
@@ -289,7 +297,7 @@ work:{...(data.work||{})},
 workers:{...(data.workers||{})},
 duration:Number(data.duration)||0,
 currentGold:Number(data.currentGold)||0,
-otherGold:Number(data.otherGold)||0,treasury:Number(data.treasury)||0,materials:{...(data.materials||{})},plots:{...(data.plots||{})},mapCount:Number(data.mapCount)||0,mapTier:Number(data.mapTier)||1,disenchantItems:Array.isArray(data.disenchantItems)?data.disenchantItems:[],tab:"totals"
+otherGold:Number(data.otherGold)||0,treasury:Number(data.treasury)||0,materials:{...(data.materials||{})},plots:{...(data.plots||{})},mapCount:Number(data.mapCount)||0,mapTier:Number(data.mapTier)||1,disenchantItems:Array.isArray(data.disenchantItems)?data.disenchantItems:[],enabled:{mining:true,smelting:true,farming:true,disenchanting:true,mapping:true,shipping:true,...(data.enabled||{})},tab:"totals"
 };
 cats.forEach(c=>c.items.forEach(([name,max])=>{
 const key=c.id+"|"+name;
