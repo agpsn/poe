@@ -4,510 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoE 1 Atlas Builder</title>
-    <style>
-      :root {
-        --bg: #0b0d12;
-        --panel: #151922;
-        --panel2: #1d2230;
-        --border: #30374a;
-        --gold: #af9047;
-        --gold2: #d1b06a;
-        --text: #e5e8ef;
-        --muted: #929bad;
-        --green: #55d6a5;
-        --red: #e36b6b;
-        --blue: #6ca9ff;
-        --node: #777d8b;
-        --node-small: #59606e;
-        --node-notable: #c19b45;
-        --node-keystone: #b45dce;
-        --allocated: #e8c66d;
-        --path: #d7b45d;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        margin: 0;
-        width: 100%;
-        height: 100%;
-      }
-
-      body {
-        background: var(--bg);
-        color: var(--text);
-        font-family:
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          Roboto,
-          Arial,
-          sans-serif;
-        overflow: hidden;
-      }
-
-      button,
-      input {
-        font: inherit;
-      }
-
-      button {
-        cursor: pointer;
-      }
-
-      .app {
-        width: 100%;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      /* =========================================================
-   HEADER
-========================================================= */
-      .header {
-        height: 64px;
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        padding: 0 18px;
-        background: #12151d;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .header h1 {
-        margin: 0;
-        color: var(--gold2);
-        font-size: 20px;
-        font-weight: 700;
-        white-space: nowrap;
-      }
-
-      .version {
-        color: var(--muted);
-        font-size: 12px;
-        white-space: nowrap;
-      }
-
-      .header-actions {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        gap: 7px;
-      }
-
-      /* =========================================================
-   BUTTONS
-========================================================= */
-      .btn {
-        border: 1px solid var(--border);
-        background: #252b39;
-        color: var(--text);
-        padding: 7px 11px;
-        border-radius: 4px;
-        font-size: 12px;
-        transition:
-          background .15s,
-          border-color .15s;
-      }
-
-      .btn:hover {
-        background: #333b4d;
-        border-color: var(--gold);
-      }
-
-      .btn-danger {
-        color: #ff9999;
-        border-color: #754040;
-        background: #291a1d;
-      }
-
-      .btn-danger:hover {
-        background: #54272a;
-        border-color: var(--red);
-      }
-
-      .btn-primary {
-        color: #17130a;
-        background: var(--gold);
-        border-color: var(--gold2);
-      }
-
-      .btn-primary:hover {
-        background: var(--gold2);
-      }
-
-      /* =========================================================
-   BODY
-========================================================= */
-      .main {
-        min-height: 0;
-        flex: 1;
-        display: grid;
-        grid-template-columns: 300px minmax(0, 1fr);
-      }
-
-      /* =========================================================
-   SIDEBAR
-========================================================= */
-      .sidebar {
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        background: var(--panel);
-        border-right: 1px solid var(--border);
-      }
-
-      .sidebar-section {
-        padding: 14px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .sidebar-title {
-        color: var(--gold2);
-        font-size: 13px;
-        font-weight: 700;
-        margin-bottom: 10px;
-      }
-
-      .search {
-        width: 100%;
-        padding: 9px 10px;
-        background: var(--panel2);
-        border: 1px solid var(--border);
-        border-radius: 4px;
-        color: var(--text);
-        outline: none;
-      }
-
-      .search:focus {
-        border-color: var(--gold);
-      }
-
-      .stat-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 6px 0;
-        font-size: 12px;
-      }
-
-      .stat-label {
-        color: var(--muted);
-      }
-
-      .stat-value {
-        color: var(--text);
-        font-weight: 700;
-      }
-
-      .stat-value.gold {
-        color: var(--gold2);
-      }
-
-      .stat-value.green {
-        color: var(--green);
-      }
-
-      .sidebar-buttons {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
-      }
-
-      .node-results {
-        min-height: 0;
-        flex: 1;
-        overflow-y: auto;
-        padding: 8px;
-      }
-
-      .node-result {
-        padding: 8px 9px;
-        margin-bottom: 4px;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        background: transparent;
-        cursor: pointer;
-      }
-
-      .node-result:hover {
-        background: rgba(175, 144, 71, .12);
-        border-color: var(--border);
-      }
-
-      .node-result-name {
-        color: #eee;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .node-result-type {
-        color: var(--muted);
-        font-size: 10px;
-        margin-top: 2px;
-      }
-
-      .node-result.allocated {
-        border-left: 3px solid var(--allocated);
-      }
-
-      /* =========================================================
-   CANVAS
-========================================================= */
-      .canvas-wrap {
-        position: relative;
-        min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-        background:
-          radial-gradient(circle at center,
-            rgba(70, 72, 88, .10),
-            transparent 65%);
-      }
-
-      #atlasCanvas {
-        display: block;
-        width: 100%;
-        height: 100%;
-        cursor: grab;
-      }
-
-      #atlasCanvas.dragging {
-        cursor: grabbing;
-      }
-
-      /* =========================================================
-   TOP OVERLAY
-========================================================= */
-      .canvas-toolbar {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        z-index: 5;
-      }
-
-      .zoom-display {
-        min-width: 62px;
-        padding: 7px 8px;
-        text-align: center;
-        background: rgba(15, 17, 23, .92);
-        border: 1px solid var(--border);
-        border-radius: 4px;
-        color: var(--muted);
-        font-size: 11px;
-      }
-
-      /* =========================================================
-   STATUS
-========================================================= */
-      .status {
-        position: absolute;
-        left: 50%;
-        bottom: 12px;
-        transform: translateX(-50%);
-        padding: 7px 12px;
-        border-radius: 4px;
-        background: rgba(12, 14, 19, .92);
-        border: 1px solid var(--border);
-        color: var(--muted);
-        font-size: 11px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity .2s;
-      }
-
-      .status.visible {
-        opacity: 1;
-      }
-
-      /* =========================================================
-   TOOLTIP
-========================================================= */
-      .tooltip {
-        position: fixed;
-        z-index: 100;
-        max-width: 420px;
-        padding: 12px 14px;
-        background:
-          linear-gradient(180deg,
-            #222733,
-            #151922);
-        border: 1px solid #656d7e;
-        border-radius: 5px;
-        box-shadow:
-          0 8px 25px rgba(0, 0, 0, .65);
-        pointer-events: none;
-        display: none;
-      }
-
-      .tooltip.visible {
-        display: block;
-      }
-
-      .tooltip-name {
-        color: var(--gold2);
-        font-size: 14px;
-        font-weight: 700;
-        margin-bottom: 7px;
-      }
-
-      .tooltip-type {
-        color: #aaa;
-        font-size: 10px;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-      }
-
-      .tooltip-stats {
-        color: #ddd;
-        font-size: 12px;
-        line-height: 1.55;
-      }
-
-      .tooltip-stats div {
-        margin-bottom: 2px;
-      }
-
-      /* =========================================================
-   HELP
-========================================================= */
-      .help {
-        color: var(--muted);
-        font-size: 10px;
-        line-height: 1.5;
-      }
-
-      /* =========================================================
-   LOADING
-========================================================= */
-      .loading {
-        position: absolute;
-        inset: 0;
-        z-index: 20;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-        background: var(--bg);
-      }
-
-      .loading-title {
-        color: var(--gold2);
-        font-size: 18px;
-        font-weight: 700;
-      }
-
-      .loading-text {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .loading.error .loading-title {
-        color: var(--red);
-      }
-
-      /* =========================================================
-   RESPONSIVE
-========================================================= */
-      @media (max-width: 800px) {
-        .main {
-          grid-template-columns: 240px minmax(0, 1fr);
-        }
-
-        .header h1 {
-          font-size: 16px;
-        }
-
-        .version {
-          display: none;
-        }
-      }
-
-      @media (max-width: 600px) {
-        .main {
-          grid-template-columns: 1fr;
-          grid-template-rows: 220px minmax(0, 1fr);
-        }
-
-        .sidebar {
-          border-right: none;
-          border-bottom: 1px solid var(--border);
-        }
-
-        .node-results {
-          display: none;
-        }
-      }
-    
-      /* Collapsible left control panel */
-      #togglePanel {
-        position: fixed;
-        top: 50%;
-        left: var(--sidebar-width, 320px);
-        transform: translateY(-50%);
-        z-index: 1000;
-        width: 28px;
-        height: 72px;
-        border: 1px solid rgba(255,255,255,.22);
-        border-left: none;
-        border-radius: 0 9px 9px 0;
-        background: rgba(20,22,28,.94);
-        color: #fff;
-        font-size: 18px;
-        line-height: 1;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 3px 0 12px rgba(0,0,0,.3);
-        transition: left .2s ease, background .15s ease;
-      }
-      #togglePanel:hover {
-        background: rgba(45,48,58,.98);
-      }
-
-      /* The controls are the .sidebar element in this layout. */
-      .sidebar {
-        transition: transform .2s ease, opacity .15s ease, width .2s ease;
-      }
-      body.panel-collapsed .sidebar {
-        transform: translateX(calc(-100% - 20px));
-        opacity: 0;
-        pointer-events: none;
-      }
-      body.panel-collapsed .main {
-        grid-template-columns: 0 minmax(0, 1fr) !important;
-      }
-      body.panel-collapsed .sidebar {
-        width: 0;
-        min-width: 0;
-        overflow: hidden;
-      }
-
-</style>
+    <style>:root{--bg:#0b0d12;--panel:#151922;--panel2:#1d2230;--border:#30374a;--gold:#af9047;--gold2:#d1b06a;--text:#e5e8ef;--muted:#929bad;--green:#55d6a5;--red:#e36b6b;--blue:#6ca9ff;--node:#777d8b;--node-small:#59606e;--node-notable:#c19b45;--node-keystone:#b45dce;--allocated:#e8c66d;--path:#d7b45d}*{box-sizing:border-box}body,html{margin:0;width:100%;height:100%}body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}button,input{font:inherit}button{cursor:pointer}.app{width:100%;height:100vh;display:flex;flex-direction:column}.header{height:64px;flex-shrink:0;display:flex;align-items:center;gap:18px;padding:0 18px;background:#12151d;border-bottom:1px solid var(--border)}.header h1{margin:0;color:var(--gold2);font-size:20px;font-weight:700;white-space:nowrap}.version{color:var(--muted);font-size:12px;white-space:nowrap}.header-actions{margin-left:auto;display:flex;align-items:center;gap:7px}.btn{border:1px solid var(--border);background:#252b39;color:var(--text);padding:7px 11px;border-radius:4px;font-size:12px;transition:background .15s,border-color .15s}.btn:hover{background:#333b4d;border-color:var(--gold)}.btn-danger{color:#f99;border-color:#754040;background:#291a1d}.btn-danger:hover{background:#54272a;border-color:var(--red)}.btn-primary{color:#17130a;background:var(--gold);border-color:var(--gold2)}.btn-primary:hover{background:var(--gold2)}.main{min-height:0;flex:1;display:grid;grid-template-columns:300px minmax(0,1fr)}.sidebar{min-height:0;display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--border)}.sidebar-section{padding:14px;border-bottom:1px solid var(--border)}.sidebar-title{color:var(--gold2);font-size:13px;font-weight:700;margin-bottom:10px}.search{width:100%;padding:9px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:4px;color:var(--text);outline:0}.search:focus{border-color:var(--gold)}.stat-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px}.stat-label{color:var(--muted)}.stat-value{color:var(--text);font-weight:700}.stat-value.gold{color:var(--gold2)}.stat-value.green{color:var(--green)}.sidebar-buttons{display:grid;grid-template-columns:1fr 1fr;gap:6px}.node-results{min-height:0;flex:1;overflow-y:auto;padding:8px}.node-result{padding:8px 9px;margin-bottom:4px;border:1px solid transparent;border-radius:4px;background:0 0;cursor:pointer}.node-result:hover{background:rgba(175,144,71,.12);border-color:var(--border)}.node-result-name{color:#eee;font-size:12px;font-weight:600}.node-result-type{color:var(--muted);font-size:10px;margin-top:2px}.node-result.allocated{border-left:3px solid var(--allocated)}.canvas-wrap{position:relative;min-width:0;min-height:0;overflow:hidden;background:radial-gradient(circle at center,rgba(70,72,88,.1),transparent 65%)}#atlasCanvas{display:block;width:100%;height:100%;cursor:grab}#atlasCanvas.dragging{cursor:grabbing}.canvas-toolbar{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:6px;z-index:5}.zoom-display{min-width:62px;padding:7px 8px;text-align:center;background:rgba(15,17,23,.92);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:11px}.status{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:7px 12px;border-radius:4px;background:rgba(12,14,19,.92);border:1px solid var(--border);color:var(--muted);font-size:11px;pointer-events:none;opacity:0;transition:opacity .2s}.status.visible{opacity:1}.tooltip{position:fixed;z-index:100;max-width:420px;padding:12px 14px;background:linear-gradient(180deg,#222733,#151922);border:1px solid #656d7e;border-radius:5px;box-shadow:0 8px 25px rgba(0,0,0,.65);pointer-events:none;display:none}.tooltip.visible{display:block}.tooltip-name{color:var(--gold2);font-size:14px;font-weight:700;margin-bottom:7px}.tooltip-type{color:#aaa;font-size:10px;text-transform:uppercase;margin-bottom:8px}.tooltip-stats{color:#ddd;font-size:12px;line-height:1.55}.tooltip-stats div{margin-bottom:2px}.help{color:var(--muted);font-size:10px;line-height:1.5}.loading{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;background:var(--bg)}.loading-title{color:var(--gold2);font-size:18px;font-weight:700}.loading-text{color:var(--muted);font-size:12px}.loading.error .loading-title{color:var(--red)}@media (max-width:800px){.main{grid-template-columns:240px minmax(0,1fr)}.header h1{font-size:16px}.version{display:none}}@media (max-width:600px){.main{grid-template-columns:1fr;grid-template-rows:220px minmax(0,1fr)}.sidebar{border-right:none;border-bottom:1px solid var(--border)}.node-results{display:none}}#togglePanel{position:fixed;top:50%;left:var(--sidebar-width,320px);transform:translateY(-50%);z-index:1000;width:28px;height:72px;border:1px solid rgba(255,255,255,.22);border-left:none;border-radius:0 9px 9px 0;background:rgba(20,22,28,.94);color:#fff;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:3px 0 12px rgba(0,0,0,.3);transition:left .2s ease,background .15s ease}#togglePanel:hover{background:rgba(45,48,58,.98)}.sidebar{transition:transform .2s ease,opacity .15s ease,width .2s ease}body.panel-collapsed .sidebar{transform:translateX(calc(-100% - 20px));opacity:0;pointer-events:none}body.panel-collapsed .main{grid-template-columns:0 minmax(0,1fr)!important}body.panel-collapsed .sidebar{width:0;min-width:0;overflow:hidden}</style>
+    <style>header {padding: 10px;background-color: #333;text-align:center} nav a {display: inline-block;padding: 10px 20px;margin-right: 10px;background-color: #555;color: white;text-decoration: none;border-radius: 5px;} nav a:hover {background-color: #777;}</style>
   </head>
   <body>
     <button id="togglePanel" type="button" title="Hide/show controls" aria-label="Hide/show controls">&lt;</button>
-
     <div class="app">
       <!-- =====================================================
          HEADER
     ====================================================== -->
       <header class="header">
-		  <nav>
-    <a href=index.html>Home</a>
-    <a href=kingsmarch-calculator.html>Kingsmarch Calculator </a>
-    <a href=map-calculator.html>Map Calculator</a>
-    <a href=atlas-calculator.html>Atlas Calculator</a>
-</nav>
+        <nav>
+          <a href=index.html>Home</a>
+          <a href=kingsmarch-calculator.html>Kingsmarch Calculator </a>
+          <a href=map-calculator.html>Map Calculator</a>
+          <a href=atlas-calculator.html>Atlas Calculator</a>
+        </nav>
         <h1> PoE 1 Atlas Builder </h1>
         <span class="version" id="versionLabel"> Loading Atlas data... </span>
         <div class="header-actions">
@@ -601,7 +113,6 @@
       */
       const ATLAS_DATA_URL = './data.json';
       let atlasData = null;
-
       /*
           DATA LOADER
 
@@ -628,7 +139,6 @@
         input.accept = '.json,application/json';
         input.style.display = 'none';
         document.body.appendChild(input);
-
         input.addEventListener('change', async () => {
           try {
             if (!input.files || !input.files.length) return;
@@ -641,34 +151,31 @@
           } finally {
             input.remove();
           }
-        }, { once: true });
-
+        }, {
+          once: true
+        });
         input.click();
       }
-
       async function loadAtlasData() {
         if (window.location.protocol === 'file:') {
           // Directly opened atlas.html: fetch() is blocked by browser CORS rules.
           chooseAtlasFile();
           return;
         }
-
         try {
-          const response = await fetch(ATLAS_DATA_URL, { cache: 'no-store' });
+          const response = await fetch(ATLAS_DATA_URL, {
+            cache: 'no-store'
+          });
           if (!response.ok) {
             throw new Error(`Could not load data.json (${response.status})`);
           }
           startAtlasWithData(await response.json());
         } catch (error) {
           console.error(error);
-          showLoadingError(
-            'Could not load data.json',
-            `${error.message}. Select data.json manually to continue.`
-          );
+          showLoadingError('Could not load data.json', `${error.message}. Select data.json manually to continue.`);
           setTimeout(chooseAtlasFile, 150);
         }
       }
-
       loadAtlasData();
       /* ============================================================
          GLOBAL STATE
@@ -877,11 +384,9 @@
       ============================================================ */
       function normalizeNode(id, raw) {
         if (!raw || typeof raw !== 'object') return null;
-
         // The exported "root" entry is a logical anchor only.
         // Never render it. The only visible starting node is 29045.
         if (id === 'root') return null;
-
         // The supplied data.json is the native PoE Atlas tree format:
         // node -> group/orbit/orbitIndex, while the group's x/y is the
         // centre of the node cluster. Calculate the actual node position.
@@ -889,17 +394,14 @@
         const group = atlasData.groups?.[String(groupId)];
         const orbit = Number(raw.orbit ?? 0);
         const orbitIndex = Number(raw.orbitIndex ?? 0);
-
         let x = raw.x ?? raw.position?.x ?? raw.pos?.x;
         let y = raw.y ?? raw.position?.y ?? raw.pos?.y;
-
         if (x === undefined || y === undefined) {
           if (group && Number.isFinite(Number(group.x)) && Number.isFinite(Number(group.y))) {
             const radii = atlasData.constants?.orbitRadii || [];
             const counts = atlasData.constants?.skillsPerOrbit || [];
             const radius = Number(radii[orbit] ?? 0);
             const count = Number(counts[orbit] ?? 1);
-
             // IMPORTANT: PoE does not use evenly-spaced angles for the
             // 16-node and 40-node orbits. These are the exact GGG orbit
             // angle tables used by the game/exported tree data.
@@ -907,16 +409,12 @@
               16: [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330],
               40: [0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140, 150, 160, 170, 180, 190, 200, 210, 220, 225, 230, 240, 250, 260, 270, 280, 290, 300, 310, 315, 320, 330, 340, 350]
             };
-
             if (radius === 0 || count <= 1) {
               x = Number(group.x);
               y = Number(group.y);
             } else {
-              const degrees = specialAngles[count]
-                ? specialAngles[count][orbitIndex]
-                : (360 * orbitIndex / count);
+              const degrees = specialAngles[count] ? specialAngles[count][orbitIndex] : (360 * orbitIndex / count);
               const angle = Number(degrees) * Math.PI / 180;
-
               // GGG's coordinate convention: angle 0 is directly above
               // the group centre. X grows right and Y grows downward.
               x = Number(group.x) + Math.sin(angle) * radius;
@@ -924,9 +422,7 @@
             }
           }
         }
-
         if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) return null;
-
         const name = raw.name || raw.title || raw.label || `Node ${id}`;
         let stats = [];
         if (Array.isArray(raw.stats)) {
@@ -936,24 +432,20 @@
         } else if (typeof raw.desc === 'string') {
           stats = [raw.desc];
         }
-
         const isKeystone = Boolean(raw.isKeystone || raw.keystone || raw.type === 'keystone');
         const isNotable = Boolean(raw.isNotable || raw.notable || raw.type === 'notable');
         const isMastery = Boolean(raw.isMastery || raw.mastery);
         const isJewelSocket = Boolean(raw.isJewelSocket || raw.jewelSocket);
-
         let type = 'Passive';
         if (isKeystone) type = 'Keystone';
         else if (isNotable) type = 'Notable';
         else if (isMastery) type = 'Mastery';
         else if (isJewelSocket) type = 'Jewel Socket';
-
         if (raw.type) {
           const t = String(raw.type).toLowerCase();
           if (t.includes('keystone')) type = 'Keystone';
           else if (t.includes('notable')) type = 'Notable';
         }
-
         const cost = Number(raw.cost) > 0 ? Number(raw.cost) : 1;
         return {
           id,
@@ -1000,13 +492,9 @@
         // This Atlas export defines 29045 as the single visible starting
         // node; "root" is only an internal anchor and is never rendered.
         if (nodes['29045']) return '29045';
-
         const logicalRoot = atlasData.nodes?.root;
-        const startId = Array.isArray(logicalRoot?.out)
-          ? logicalRoot.out.find(id => nodes[String(id)])
-          : null;
+        const startId = Array.isArray(logicalRoot?.out) ? logicalRoot.out.find(id => nodes[String(id)]) : null;
         if (startId !== undefined && startId !== null) return String(startId);
-
         const candidates = ['0', '1', 'AtlasStart', 'atlas_start'];
         for (const id of candidates) {
           if (nodes[id]) return id;
@@ -1182,9 +670,10 @@
       function getAtlasBackgroundEntry() {
         const bg = atlasData?.sprites?.atlasBackground;
         if (!bg || typeof bg !== 'object') return null;
-        const entries = Object.entries(bg)
-          .map(([zoom, sheet]) => ({ zoom: Number(zoom), sheet }))
-          .filter(e => Number.isFinite(e.zoom) && e.sheet?.filename);
+        const entries = Object.entries(bg).map(([zoom, sheet]) => ({
+          zoom: Number(zoom),
+          sheet
+        })).filter(e => Number.isFinite(e.zoom) && e.sheet?.filename);
         if (!entries.length) return null;
         // Prefer the largest supplied source image.
         return entries.sort((a, b) => b.zoom - a.zoom)[0].sheet;
@@ -1214,10 +703,8 @@
           loadAtlasBackground();
           return;
         }
-
         const all = Object.values(nodes);
         if (!all.length) return;
-
         // Fit the real GGG Atlas artwork to the actual node layout.
         // The exported atlas-background sprite is an artwork layer, not a
         // 1:1 bounding box for the node coordinates.  The previous version
@@ -1231,11 +718,9 @@
         const nodesH = Math.max(1, maxY - minY);
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
-
         const imageW = entry.w || atlasBackgroundImage.naturalWidth;
         const imageH = entry.h || atlasBackgroundImage.naturalHeight;
         const imageAspect = imageW / Math.max(1, imageH);
-
         // Give the artwork a modest border around the outermost nodes while
         // preserving the exact aspect ratio of the game's background.
         const padding = 1.12;
@@ -1246,29 +731,14 @@
         } else {
           worldW = worldH * imageAspect;
         }
-
-        const topLeft = worldToScreen(
-          centerX - worldW / 2,
-          centerY - worldH / 2
-        );
-        const bottomRight = worldToScreen(
-          centerX + worldW / 2,
-          centerY + worldH / 2
-        );
-
+        const topLeft = worldToScreen(centerX - worldW / 2, centerY - worldH / 2);
+        const bottomRight = worldToScreen(centerX + worldW / 2, centerY + worldH / 2);
         ctx.save();
         ctx.globalAlpha = 1;
         ctx.imageSmoothingEnabled = true;
-        ctx.drawImage(
-          atlasBackgroundImage,
-          topLeft.x,
-          topLeft.y,
-          bottomRight.x - topLeft.x,
-          bottomRight.y - topLeft.y
-        );
+        ctx.drawImage(atlasBackgroundImage, topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
         ctx.restore();
       }
-
       /* ============================================================
          GRID
       ============================================================ */
@@ -1346,7 +816,12 @@
             const scale = Number(scaleKey);
             for (const [icon, coord] of Object.entries(sheet.coords)) {
               if (!coord || !Number.isFinite(Number(coord.x)) || !Number.isFinite(Number(coord.y))) continue;
-              const entry = { category, scale, filename: sheet.filename, coord };
+              const entry = {
+                category,
+                scale,
+                filename: sheet.filename,
+                coord
+              };
               if (!spriteEntries.has(icon)) spriteEntries.set(icon, []);
               spriteEntries.get(icon).push(entry);
             }
@@ -1380,32 +855,32 @@
         }
         return null;
       }
-
       // The real game draws the node icon INSIDE a separate circular frame.
       // Both the icon sheets and the frame sheet are supplied by GGG in data.json.
       function getBestFrame(node, state) {
         const frames = atlasData?.sprites?.frame;
         if (!frames || typeof frames !== 'object') return null;
-
         const candidates = [];
         for (const [scaleKey, sheet] of Object.entries(frames)) {
           if (!sheet?.filename || !sheet?.coords) continue;
           const scale = Number(scaleKey);
           let key;
           if (node.isKeystone) {
-            key = state === 'allocated' ? 'KeystoneFrameAllocated' :
-                  state === 'highlight' ? 'KeystoneFrameCanAllocate' : 'KeystoneFrameUnallocated';
+            key = state === 'allocated' ? 'KeystoneFrameAllocated' : state === 'highlight' ? 'KeystoneFrameCanAllocate' : 'KeystoneFrameUnallocated';
           } else if (node.isNotable) {
-            key = state === 'allocated' ? 'NotableFrameAllocated' :
-                  state === 'highlight' ? 'NotableFrameCanAllocate' : 'NotableFrameUnallocated';
+            key = state === 'allocated' ? 'NotableFrameAllocated' : state === 'highlight' ? 'NotableFrameCanAllocate' : 'NotableFrameUnallocated';
           } else {
-            key = state === 'allocated' ? 'PSSkillFrameActive' :
-                  state === 'highlight' ? 'PSSkillFrameHighlighted' : 'PSSkillFrame';
+            key = state === 'allocated' ? 'PSSkillFrameActive' : state === 'highlight' ? 'PSSkillFrameHighlighted' : 'PSSkillFrame';
           }
           const coord = sheet.coords[key];
-          if (coord) candidates.push({ category: 'frame', scale, filename: sheet.filename, coord });
+          if (coord) candidates.push({
+            category: 'frame',
+            scale,
+            filename: sheet.filename,
+            coord
+          });
         }
-        return candidates.sort((a,b) => (b.scale || 0) - (a.scale || 0))[0] || null;
+        return candidates.sort((a, b) => (b.scale || 0) - (a.scale || 0))[0] || null;
       }
 
       function drawSprite(entry, dx, dy, dw, dh) {
@@ -1419,7 +894,6 @@
       function drawNode(node) {
         const p = worldToScreen(node.x, node.y);
         if (p.x < -150 || p.x > width + 150 || p.y < -150 || p.y > height + 150) return;
-
         // Match the game's relative node sizes: normal < notable < keystone.
         const baseFrame = node.isKeystone ? 24 : node.isNotable ? 18 : 12;
         const size = baseFrame * Math.max(.55, Math.min(2.0, camera.zoom));
@@ -1427,7 +901,6 @@
         const isHover = currentHoverNode === node.id;
         const isSearchMatch = searchMatchIds.has(node.id);
         const state = isAllocated ? 'allocated' : (isHover ? 'highlight' : 'unallocated');
-
         // Search highlight sits behind the actual game node graphics.
         if (isSearchMatch) {
           ctx.save();
@@ -1440,10 +913,8 @@
           ctx.stroke();
           ctx.restore();
         }
-
         const frame = getBestFrame(node, state);
         const icon = getBestSprite(node);
-
         // Draw the exact GGG frame first, then the icon inside it.
         if (frame) {
           drawSprite(frame, p.x - size / 2, p.y - size / 2, size, size);
@@ -1459,14 +930,12 @@
           ctx.stroke();
           ctx.restore();
         }
-
         if (icon) {
           const c = icon.coord;
           // GGG's icon sprite is smaller than its frame. Preserve that ratio.
           const iconSize = size * Math.min(.68, c.w && c.h ? Math.min(34 / c.w, 34 / c.h) : .66);
           drawSprite(icon, p.x - iconSize / 2, p.y - iconSize / 2, iconSize, iconSize);
         }
-
         // Search highlight remains visible over the real node.
         if (isSearchMatch) {
           ctx.save();
@@ -1477,7 +946,6 @@
           ctx.stroke();
           ctx.restore();
         }
-
         // Names are NEVER rendered on the Atlas itself. They are tooltip-only.
       }
       /* ============================================================
@@ -1710,20 +1178,16 @@
         const startId = rootNodeId || '29045';
         if (!nodes[startId]) return null;
         if (startId === targetId) return [startId];
-
         const queue = [startId];
         const previous = new Map();
         const visited = new Set([startId]);
-
         while (queue.length) {
           const current = queue.shift();
           const neighbors = getNeighbors(current);
-
           for (const neighbor of neighbors) {
             if (visited.has(neighbor) || !nodes[neighbor]) continue;
             visited.add(neighbor);
             previous.set(neighbor, current);
-
             if (neighbor === targetId) {
               const path = [];
               let cursor = targetId;
@@ -1744,7 +1208,6 @@
       function toggleNode(nodeId) {
         const node = nodes[nodeId];
         if (!node) return;
-
         if (allocated.has(nodeId)) {
           if (!canDeallocate(nodeId)) {
             showStatusMessage('You cannot remove this node because it would disconnect other allocated nodes.');
@@ -1755,7 +1218,6 @@
           updateUI();
           return;
         }
-
         // If the clicked node is already adjacent to the allocated tree,
         // the path is naturally just that node. Otherwise automatically
         // allocate the shortest path from 29045 to it.
@@ -1764,21 +1226,14 @@
           showStatusMessage('Could not find a connected path from the Atlas start node.');
           return;
         }
-
         const missing = path.filter(id => !allocated.has(id));
         const cost = missing.reduce((sum, id) => sum + (nodes[id]?.cost || 1), 0);
-
         if (cost > getRemainingPoints()) {
           showStatusMessage(`Not enough Atlas points for this path (${cost} needed).`);
           return;
         }
-
         missing.forEach(id => allocated.add(id));
-        showStatusMessage(
-          missing.length > 1
-            ? `Allocated path to ${node.name || 'Atlas node'} (${cost} points).`
-            : `Allocated: ${node.name || 'Atlas node'}`
-        );
+        showStatusMessage(missing.length > 1 ? `Allocated path to ${node.name || 'Atlas node'} (${cost} points).` : `Allocated: ${node.name || 'Atlas node'}`);
         updateUI();
       }
       /* ============================================================
@@ -1833,7 +1288,8 @@
         searchResults = searchResults.slice(0, 100);
         render();
         if (searchResults.length === 0) {
-          container.innerHTML = '<div class="help" style="padding:10px;">No matching nodes.</div>';
+          container.innerHTML = ' < div class = "help"
+          style = "padding:10px;" > No matching nodes. < /div>';
           return;
         }
         searchResults.forEach(node => {
@@ -1842,6 +1298,7 @@
           item.innerHTML = `
 
 
+												
 												<div class="node-result-name">
                     ${escapeHtml(node.name)}
                 </div>
@@ -2009,7 +1466,7 @@
          ESCAPE HTML
       ============================================================ */
       function escapeHtml(value) {
-        return String(value).replace(/&/g, '&amp;').replace(/</g,
+        return String(value).replace(/&/g, '&amp;').replace(/ < /g,
           '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
       /* ============================================================
@@ -2023,6 +1480,7 @@
         document.body.innerHTML = `
 
 
+											
 											<div
             style="
                 min-height:100vh;
@@ -2110,7 +1568,7 @@ data.json</pre>
 
     `;
       }
-          const sidebarElement = document.querySelector('.sidebar');
+      const sidebarElement = document.querySelector('.sidebar');
       const panelToggle = document.getElementById('togglePanel');
 
       function positionPanelToggle() {
@@ -2121,7 +1579,6 @@ data.json</pre>
           panelToggle.style.left = `${sidebarElement.getBoundingClientRect().right}px`;
         }
       }
-
       if (sidebarElement && panelToggle) {
         positionPanelToggle();
         window.addEventListener('resize', positionPanelToggle);
@@ -2135,6 +1592,6 @@ data.json</pre>
           requestAnimationFrame(positionPanelToggle);
         });
       }
-</script>
+    </script>
   </body>
 </html>
