@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoE 1 Atlas Builder</title>
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --panel: #151922;
+        --panel2: #1d2230;
+        --border: #30374a;
+        --gold: #af9047;
+        --gold2: #d1b06a;
+        --text: #e5e8ef;
+        --muted: #929bad;
+        --green: #55d6a5;
+        --red: #e36b6b;
+        --blue: #6ca9ff;
+        --node: #777d8b;
+        --node-small: #59606e;
+        --node-notable: #c19b45;
+        --node-keystone: #b45dce;
+        --allocated: #e8c66d;
+        --path: #d7b45d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Arial,
+          sans-serif;
+        overflow: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .app {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* =========================================================
+   HEADER
+========================================================= */
+      .header {
+        height: 64px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 18px;
+        background: #12151d;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .header h1 {
+        margin: 0;
+        color: var(--gold2);
+        font-size: 20px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .version {
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .header-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      /* =========================================================
+   BUTTONS
+========================================================= */
+      .btn {
+        border: 1px solid var(--border);
+        background: #252b39;
+        color: var(--text);
+        padding: 7px 11px;
+        border-radius: 4px;
+        font-size: 12px;
+        transition:
+          background .15s,
+          border-color .15s;
+      }
+
+      .btn:hover {
+        background: #333b4d;
+        border-color: var(--gold);
+      }
+
+      .btn-danger {
+        color: #ff9999;
+        border-color: #754040;
+        background: #291a1d;
+      }
+
+      .btn-danger:hover {
+        background: #54272a;
+        border-color: var(--red);
+      }
+
+      .btn-primary {
+        color: #17130a;
+        background: var(--gold);
+        border-color: var(--gold2);
+      }
+
+      .btn-primary:hover {
+        background: var(--gold2);
+      }
+
+      /* =========================================================
+   BODY
+========================================================= */
+      .main {
+        min-height: 0;
+        flex: 1;
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+      }
+
+      /* =========================================================
+   SIDEBAR
+========================================================= */
+      .sidebar {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+      }
+
+      .sidebar-section {
+        padding: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sidebar-title {
+        color: var(--gold2);
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .search {
+        width: 100%;
+        padding: 9px 10px;
+        background: var(--panel2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--text);
+        outline: none;
+      }
+
+      .search:focus {
+        border-color: var(--gold);
+      }
+
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 12px;
+      }
+
+      .stat-label {
+        color: var(--muted);
+      }
+
+      .stat-value {
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .stat-value.gold {
+        color: var(--gold2);
+      }
+
+      .stat-value.green {
+        color: var(--green);
+      }
+
+      .sidebar-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .node-results {
+        min-height: 0;
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+      }
+
+      .node-result {
+        padding: 8px 9px;
+        margin-bottom: 4px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .node-result:hover {
+        background: rgba(175, 144, 71, .12);
+        border-color: var(--border);
+      }
+
+      .node-result-name {
+        color: #eee;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .node-result-type {
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 2px;
+      }
+
+      .node-result.allocated {
+        border-left: 3px solid var(--allocated);
+      }
+
+      /* =========================================================
+   CANVAS
+========================================================= */
+      .canvas-wrap {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at center,
+            rgba(70, 72, 88, .10),
+            transparent 65%);
+      }
+
+      #atlasCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+      }
+
+      #atlasCanvas.dragging {
+        cursor: grabbing;
+      }
+
+      /* =========================================================
+   TOP OVERLAY
+========================================================= */
+      .canvas-toolbar {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 5;
+      }
+
+      .zoom-display {
+        min-width: 62px;
+        padding: 7px 8px;
+        text-align: center;
+        background: rgba(15, 17, 23, .92);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      /* =========================================================
+   STATUS
+========================================================= */
+      .status {
+        position: absolute;
+        left: 50%;
+        bottom: 12px;
+        transform: translateX(-50%);
+        padding: 7px 12px;
+        border-radius: 4px;
+        background: rgba(12, 14, 19, .92);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 11px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity .2s;
+      }
+
+      .status.visible {
+        opacity: 1;
+      }
+
+      /* =========================================================
+   TOOLTIP
+========================================================= */
+      .tooltip {
+        position: fixed;
+        z-index: 100;
+        max-width: 420px;
+        padding: 12px 14px;
+        background:
+          linear-gradient(180deg,
+            #222733,
+            #151922);
+        border: 1px solid #656d7e;
+        border-radius: 5px;
+        box-shadow:
+          0 8px 25px rgba(0, 0, 0, .65);
+        pointer-events: none;
+        display: none;
+      }
+
+      .tooltip.visible {
+        display: block;
+      }
+
+      .tooltip-name {
+        color: var(--gold2);
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 7px;
+      }
+
+      .tooltip-type {
+        color: #aaa;
+        font-size: 10px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .tooltip-stats {
+        color: #ddd;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .tooltip-stats div {
+        margin-bottom: 2px;
+      }
+
+      /* =========================================================
+   HELP
+========================================================= */
+      .help {
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.5;
+      }
+
+      /* =========================================================
+   LOADING
+========================================================= */
+      .loading {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        background: var(--bg);
+      }
+
+      .loading-title {
+        color: var(--gold2);
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .loading-text {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .loading.error .loading-title {
+        color: var(--red);
+      }
+
+      /* =========================================================
+   RESPONSIVE
+========================================================= */
+      @media (max-width: 800px) {
+        .main {
+          grid-template-columns: 240px minmax(0, 1fr);
+        }
+
+        .header h1 {
+          font-size: 16px;
+        }
+
+        .version {
+          display: none;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .main {
+          grid-template-columns: 1fr;
+          grid-template-rows: 220px minmax(0, 1fr);
+        }
+
+        .sidebar {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .node-results {
+          display: none;
+        }
+      }
+    
+      /* Collapsible left control panel */
+      #togglePanel {
+        position: fixed;
+        top: 50%;
+        left: var(--sidebar-width, 320px);
+        transform: translateY(-50%);
+        z-index: 1000;
+        width: 28px;
+        height: 72px;
+        border: 1px solid rgba(255,255,255,.22);
+        border-left: none;
+        border-radius: 0 9px 9px 0;
+        background: rgba(20,22,28,.94);
+        color: #fff;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 3px 0 12px rgba(0,0,0,.3);
+        transition: left .2s ease, background .15s ease;
+      }
+      #togglePanel:hover {
+        background: rgba(45,48,58,.98);
+      }
+
+      /* The controls are the .sidebar element in this layout. */
+      .sidebar {
+        transition: transform .2s ease, opacity .15s ease, width .2s ease;
+      }
+      body.panel-collapsed .sidebar {
+        transform: translateX(calc(-100% - 20px));
+        opacity: 0;
+        pointer-events: none;
+      }
+      body.panel-collapsed .main {
+        grid-template-columns: 0 minmax(0, 1fr) !important;
+      }
+      body.panel-collapsed .sidebar {
+        width: 0;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+</style>
+  </head>
+  <body>
+    <button id="togglePanel" type="button" title="Hide/show controls" aria-label="Hide/show controls">&lt;</button>
+
+    <div class="app">
+      <!-- =====================================================
+         HEADER
+    ====================================================== -->
+      <header class="header">
+        <h1> PoE 1 Atlas Builder </h1>
+        <span class="version" id="versionLabel"> Loading Atlas data... </span>
+        <div class="header-actions">
+          <button class="btn" id="downloadBuild"> Download Build </button>
+          <button class="btn" id="uploadBuildButton"> Upload Build </button>
+          <input type="file" id="buildFile" accept=".json,application/json" style="display:none">
+          <button class="btn btn-danger" id="resetButton"> Reset </button>
+        </div>
+      </header>
+      <!-- =====================================================
+         MAIN
+    ====================================================== -->
+      <main class="main">
+        <!-- =================================================
+             SIDEBAR
+        ================================================== -->
+        <aside class="sidebar">
+          <section class="sidebar-section">
+            <div class="sidebar-title"> Atlas Points </div>
+            <div class="stat-row">
+              <span class="stat-label"> Allocated </span>
+              <span class="stat-value gold" id="allocatedPoints"> 0 </span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"> Remaining </span>
+              <span class="stat-value green" id="remainingPoints"> 132 </span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"> Total </span>
+              <span class="stat-value" id="totalPoints"> 132 </span>
+            </div>
+          </section>
+          <section class="sidebar-section">
+            <div class="sidebar-title"> Search Atlas </div>
+            <input type="text" class="search" id="nodeSearch" placeholder="Search node name or description..." autocomplete="off">
+          </section>
+          <section class="sidebar-section">
+            <div class="sidebar-title"> Controls </div>
+            <div class="sidebar-buttons">
+              <button class="btn" id="zoomIn"> Zoom + </button>
+              <button class="btn" id="zoomOut"> Zoom − </button>
+              <button class="btn" id="centerTree"> Center </button>
+              <button class="btn" id="clearSearch"> Clear Search </button>
+            </div>
+          </section>
+          <section class="sidebar-section">
+            <div class="sidebar-title"> Instructions </div>
+            <div class="help"> Click an adjacent node to allocate it. <br> Click an allocated node to remove it. <br> Hover a node to see its name and description. <br> Drag the Atlas to pan. <br> Use the mouse wheel to zoom. <br> Search results can be clicked to center the node. </div>
+          </section>
+          <div class="node-results" id="nodeResults"></div>
+        </aside>
+        <!-- =================================================
+             CANVAS
+        ================================================== -->
+        <section class="canvas-wrap" id="canvasWrap">
+          <canvas id="atlasCanvas"></canvas>
+          <div class="canvas-toolbar">
+            <button class="btn" id="zoomInCanvas"> + </button>
+            <div class="zoom-display" id="zoomDisplay"> 100% </div>
+            <button class="btn" id="zoomOutCanvas"> − </button>
+          </div>
+          <div class="status" id="status"></div>
+        </section>
+      </main>
+    </div>
+    <!-- =========================================================
+     TOOLTIP
+========================================================= -->
+    <div class="tooltip" id="tooltip">
+      <div class="tooltip-name" id="tooltipName"></div>
+      <div class="tooltip-type" id="tooltipType"></div>
+      <div class="tooltip-stats" id="tooltipStats"></div>
+    </div>
+    <!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+    <script>
+      /* ============================================================
+   LOAD GGG DATA.JSON
+============================================================ */
+      /*
+          IMPORTANT:
+
+          Put data.json in the SAME directory as this HTML file.
+
+              atlas-builder.html
+              data.json
+
+          This is intentionally near the top so the Atlas data
+          source is easy to find/change later.
+      */
+      const ATLAS_DATA_URL = './data.json';
+      let atlasData = null;
+
+      /*
+          DATA LOADER
+
+          Browsers do not allow fetch('./data.json') when this HTML is
+          opened directly from disk (file://). The planner therefore:
+
+          - automatically loads ./data.json when served from http/https
+          - opens a file picker when opened directly from disk
+
+          This keeps atlas.html permanent while data.json can be replaced
+          with a newer Atlas export later.
+      */
+      function startAtlasWithData(data) {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('The selected file is not a valid Atlas JSON object.');
+        }
+        atlasData = data;
+        initializeAtlasBuilder();
+      }
+
+      function chooseAtlasFile() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        input.addEventListener('change', async () => {
+          try {
+            if (!input.files || !input.files.length) return;
+            const file = input.files[0];
+            const data = JSON.parse(await file.text());
+            startAtlasWithData(data);
+          } catch (error) {
+            console.error(error);
+            showLoadingError('Could not load Atlas JSON', error.message || 'Invalid JSON file.');
+          } finally {
+            input.remove();
+          }
+        }, { once: true });
+
+        input.click();
+      }
+
+      async function loadAtlasData() {
+        if (window.location.protocol === 'file:') {
+          // Directly opened atlas.html: fetch() is blocked by browser CORS rules.
+          chooseAtlasFile();
+          return;
+        }
+
+        try {
+          const response = await fetch(ATLAS_DATA_URL, { cache: 'no-store' });
+          if (!response.ok) {
+            throw new Error(`Could not load data.json (${response.status})`);
+          }
+          startAtlasWithData(await response.json());
+        } catch (error) {
+          console.error(error);
+          showLoadingError(
+            'Could not load data.json',
+            `${error.message}. Select data.json manually to continue.`
+          );
+          setTimeout(chooseAtlasFile, 150);
+        }
+      }
+
+      loadAtlasData();
+      /* ============================================================
+         GLOBAL STATE
+      ============================================================ */
+      let nodes = {};
+      let connections = [];
+      let allocated = new Set();
+      let totalAtlasPoints = 138;
+      let currentHoverNode = null;
+      let searchResults = [];
+      let searchMatchIds = new Set();
+      // PoE sprite-sheet cache. The Atlas JSON supplies the actual sprite
+      // URLs and icon coordinates, so the renderer does not hard-code icons.
+      const spriteSheets = new Map();
+      const spriteEntries = new Map();
+      const pendingSpriteLoads = new Set();
+      let canvas;
+      let ctx;
+      let canvasWrap;
+      let width = 0;
+      let height = 0;
+      let dpr = window.devicePixelRatio || 1;
+      /*
+          Camera state.
+
+          World coordinates come from GGG's Atlas data.
+      */
+      let camera = {
+        x: 0,
+        y: 0,
+        zoom: 1
+      };
+      /*
+          Mouse state.
+      */
+      let mouse = {
+        x: 0,
+        y: 0,
+        worldX: 0,
+        worldY: 0,
+        down: false,
+        dragging: false,
+        lastX: 0,
+        lastY: 0
+      };
+      /*
+          Render scale.
+
+          GGG's exported coordinates can be considerably larger
+          than the browser viewport, so we calculate an automatic
+          base scale.
+      */
+      let worldScale = 1;
+      /*
+          Root node.
+
+          Usually the Atlas starting node is the node with
+          no parents / the special root node.
+      */
+      let rootNodeId = null;
+      /* ============================================================
+         INITIALIZATION
+      ============================================================ */
+      function initializeAtlasBuilder() {
+        normalizeAtlasData();
+        setupCanvas();
+        setupControls();
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        centerTree();
+        updateUI();
+        render();
+      }
+      /* ============================================================
+         DATA NORMALIZATION
+      ============================================================ */
+      function normalizeAtlasData() {
+        /*
+            GGG's export format is intentionally kept flexible
+            here because the exact shape can differ between
+            releases.
+
+            The official export contains nodes, groups and
+            connections. We convert those into a simple internal
+            representation.
+        */
+        /*
+            Detect nodes.
+        */
+        let rawNodes = atlasData.nodes || {};
+        /*
+            Some exports may provide an array instead of an object.
+        */
+        if (Array.isArray(rawNodes)) {
+          const converted = {};
+          rawNodes.forEach(node => {
+            const id = node.id ?? node.key ?? node.nodeId;
+            if (id !== undefined) {
+              converted[String(id)] = node;
+            }
+          });
+          rawNodes = converted;
+        }
+        Object.entries(rawNodes).forEach(([id, raw]) => {
+          const node = normalizeNode(String(id), raw);
+          if (node) {
+            nodes[node.id] = node;
+          }
+        });
+        /*
+            Build connections.
+
+            First use explicit node connections if present.
+        */
+        Object.values(nodes).forEach(node => {
+          if (Array.isArray(node.raw?.connections)) {
+            node.raw.connections.forEach(other => {
+              addConnection(node.id, String(other));
+            });
+          }
+          if (Array.isArray(node.raw?.connectionsTo)) {
+            node.raw.connectionsTo.forEach(other => {
+              addConnection(node.id, String(other));
+            });
+          }
+          if (Array.isArray(node.raw?.out)) {
+            node.raw.out.forEach(other => {
+              addConnection(node.id, String(other));
+            });
+          }
+        });
+        /*
+            Also inspect groups.
+
+            GGG tree exports commonly express connections
+            through node/group relationships.
+        */
+        const groups = atlasData.groups || {};
+        Object.values(groups).forEach(group => {
+          const groupNodes = group.nodes || [];
+          /*
+              Do not automatically connect every node in
+              the same group. Group membership is not
+              necessarily a connection.
+
+              We only use explicit group connections.
+          */
+          const groupConnections = group.connections || group.edges || [];
+          groupConnections.forEach(edge => {
+            if (Array.isArray(edge) && edge.length >= 2) {
+              addConnection(String(edge[0]), String(edge[1]));
+            }
+          });
+        });
+        /*
+            Some exports expose connections globally.
+        */
+        const rawConnections = atlasData.connections || atlasData.edges || [];
+        if (Array.isArray(rawConnections)) {
+          rawConnections.forEach(edge => {
+            if (Array.isArray(edge) && edge.length >= 2) {
+              addConnection(String(edge[0]), String(edge[1]));
+            } else if (edge && typeof edge === 'object') {
+              const a = edge.from ?? edge.source ?? edge.a;
+              const b = edge.to ?? edge.target ?? edge.b;
+              if (a !== undefined && b !== undefined) {
+                addConnection(String(a), String(b));
+              }
+            }
+          });
+        }
+        /*
+            Find the likely root node.
+        */
+        rootNodeId = findRootNode();
+        /*
+            Atlas point count.
+
+            If the data exposes a total, use it.
+            Otherwise retain the normal Atlas total.
+        */
+        const possibleTotals = [
+          atlasData.totalPoints,
+          atlasData.maxPoints,
+          atlasData.points?.totalPoints,
+          atlasData.constants?.totalPoints
+        ];
+        for (const candidate of possibleTotals) {
+          if (Number.isFinite(Number(candidate)) && Number(candidate) > 0) {
+            totalAtlasPoints = Number(candidate);
+            break;
+          }
+        }
+        /*
+            Update version label.
+        */
+        const version = atlasData.version || atlasData.gameVersion || atlasData.league || 'GGG Atlas Data';
+        document.getElementById('versionLabel').textContent = String(version);
+        buildSpriteIndex();
+        console.log('Loaded Atlas data:', atlasData);
+        console.log('Normalized nodes:', Object.keys(nodes).length);
+        console.log('Normalized connections:', connections.length);
+      }
+      /* ============================================================
+         NORMALIZE NODE
+      ============================================================ */
+      function normalizeNode(id, raw) {
+        if (!raw || typeof raw !== 'object') return null;
+
+        // The exported "root" entry is a logical anchor only.
+        // Never render it. The only visible starting node is 29045.
+        if (id === 'root') return null;
+
+        // The supplied data.json is the native PoE Atlas tree format:
+        // node -> group/orbit/orbitIndex, while the group's x/y is the
+        // centre of the node cluster. Calculate the actual node position.
+        const groupId = raw.group;
+        const group = atlasData.groups?.[String(groupId)];
+        const orbit = Number(raw.orbit ?? 0);
+        const orbitIndex = Number(raw.orbitIndex ?? 0);
+
+        let x = raw.x ?? raw.position?.x ?? raw.pos?.x;
+        let y = raw.y ?? raw.position?.y ?? raw.pos?.y;
+
+        if (x === undefined || y === undefined) {
+          if (group && Number.isFinite(Number(group.x)) && Number.isFinite(Number(group.y))) {
+            const radii = atlasData.constants?.orbitRadii || [];
+            const counts = atlasData.constants?.skillsPerOrbit || [];
+            const radius = Number(radii[orbit] ?? 0);
+            const count = Number(counts[orbit] ?? 1);
+
+            // IMPORTANT: PoE does not use evenly-spaced angles for the
+            // 16-node and 40-node orbits. These are the exact GGG orbit
+            // angle tables used by the game/exported tree data.
+            const specialAngles = {
+              16: [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330],
+              40: [0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140, 150, 160, 170, 180, 190, 200, 210, 220, 225, 230, 240, 250, 260, 270, 280, 290, 300, 310, 315, 320, 330, 340, 350]
+            };
+
+            if (radius === 0 || count <= 1) {
+              x = Number(group.x);
+              y = Number(group.y);
+            } else {
+              const degrees = specialAngles[count]
+                ? specialAngles[count][orbitIndex]
+                : (360 * orbitIndex / count);
+              const angle = Number(degrees) * Math.PI / 180;
+
+              // GGG's coordinate convention: angle 0 is directly above
+              // the group centre. X grows right and Y grows downward.
+              x = Number(group.x) + Math.sin(angle) * radius;
+              y = Number(group.y) - Math.cos(angle) * radius;
+            }
+          }
+        }
+
+        if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) return null;
+
+        const name = raw.name || raw.title || raw.label || `Node ${id}`;
+        let stats = [];
+        if (Array.isArray(raw.stats)) {
+          stats = raw.stats.map(String).filter(Boolean);
+        } else if (typeof raw.description === 'string') {
+          stats = [raw.description];
+        } else if (typeof raw.desc === 'string') {
+          stats = [raw.desc];
+        }
+
+        const isKeystone = Boolean(raw.isKeystone || raw.keystone || raw.type === 'keystone');
+        const isNotable = Boolean(raw.isNotable || raw.notable || raw.type === 'notable');
+        const isMastery = Boolean(raw.isMastery || raw.mastery);
+        const isJewelSocket = Boolean(raw.isJewelSocket || raw.jewelSocket);
+
+        let type = 'Passive';
+        if (isKeystone) type = 'Keystone';
+        else if (isNotable) type = 'Notable';
+        else if (isMastery) type = 'Mastery';
+        else if (isJewelSocket) type = 'Jewel Socket';
+
+        if (raw.type) {
+          const t = String(raw.type).toLowerCase();
+          if (t.includes('keystone')) type = 'Keystone';
+          else if (t.includes('notable')) type = 'Notable';
+        }
+
+        const cost = Number(raw.cost) > 0 ? Number(raw.cost) : 1;
+        return {
+          id,
+          x: Number(x),
+          y: Number(y),
+          name,
+          stats,
+          type,
+          cost,
+          isKeystone,
+          isNotable,
+          isMastery,
+          isJewelSocket,
+          icon: raw.icon || null,
+          raw
+        };
+      }
+      /* ============================================================
+         CONNECTIONS
+      ============================================================ */
+      function addConnection(a, b) {
+        if (!nodes[a] || !nodes[b] || a === b) {
+          return;
+        }
+        const key = a < b ? `${a}|${b}` : `${b}|${a}`;
+        if (connections.some(connection => connection.key === key)) {
+          return;
+        }
+        connections.push({
+          a,
+          b,
+          key
+        });
+      }
+      /* ============================================================
+         ROOT
+      ============================================================ */
+      function findRootNode() {
+        /*
+            Prefer the actual visible starting node: the target of the
+            logical/internal 'root' anchor. The anchor itself is never
+            normalized into nodes, so there can only be one visible start.
+        */
+        // This Atlas export defines 29045 as the single visible starting
+        // node; "root" is only an internal anchor and is never rendered.
+        if (nodes['29045']) return '29045';
+
+        const logicalRoot = atlasData.nodes?.root;
+        const startId = Array.isArray(logicalRoot?.out)
+          ? logicalRoot.out.find(id => nodes[String(id)])
+          : null;
+        if (startId !== undefined && startId !== null) return String(startId);
+
+        const candidates = ['0', '1', 'AtlasStart', 'atlas_start'];
+        for (const id of candidates) {
+          if (nodes[id]) return id;
+        }
+        /*
+            Find a node with no connections.
+        */
+        const degree = {};
+        Object.keys(nodes).forEach(id => {
+          degree[id] = 0;
+        });
+        connections.forEach(edge => {
+          degree[edge.a] = (degree[edge.a] || 0) + 1;
+          degree[edge.b] = (degree[edge.b] || 0) + 1;
+        });
+        const isolated = Object.keys(nodes).find(id => degree[id] === 0);
+        if (isolated) {
+          return isolated;
+        }
+        /*
+            Otherwise choose the node nearest the
+            geometric center.
+        */
+        const all = Object.values(nodes);
+        if (!all.length) {
+          return null;
+        }
+        const centerX = all.reduce(
+          (sum, n) => sum + n.x, 0) / all.length;
+        const centerY = all.reduce(
+          (sum, n) => sum + n.y, 0) / all.length;
+        all.sort(
+          (a, b) => {
+            const da = Math.hypot(a.x - centerX, a.y - centerY);
+            const db = Math.hypot(b.x - centerX, b.y - centerY);
+            return da - db;
+          });
+        return all[0].id;
+      }
+      /* ============================================================
+         CANVAS SETUP
+      ============================================================ */
+      function setupCanvas() {
+        canvas = document.getElementById('atlasCanvas');
+        ctx = canvas.getContext('2d');
+        canvasWrap = document.getElementById('canvasWrap');
+        canvas.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('wheel', onWheel, {
+          passive: false
+        });
+        canvas.addEventListener('mouseleave',
+          () => {
+            currentHoverNode = null;
+            hideTooltip();
+          });
+        canvas.addEventListener('mousemove', updateHover);
+        canvas.addEventListener('click', onCanvasClick);
+      }
+      /* ============================================================
+         RESIZE
+      ============================================================ */
+      function resizeCanvas() {
+        if (!canvas) {
+          return;
+        }
+        const rect = canvasWrap.getBoundingClientRect();
+        width = Math.max(1, rect.width);
+        height = Math.max(1, rect.height);
+        dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        render();
+      }
+      /* ============================================================
+         CAMERA
+      ============================================================ */
+      function calculateWorldScale() {
+        const all = Object.values(nodes);
+        if (!all.length) {
+          worldScale = 1;
+          return;
+        }
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        all.forEach(node => {
+          minX = Math.min(minX, node.x);
+          maxX = Math.max(maxX, node.x);
+          minY = Math.min(minY, node.y);
+          maxY = Math.max(maxY, node.y);
+        });
+        const worldWidth = Math.max(1, maxX - minX);
+        const worldHeight = Math.max(1, maxY - minY);
+        /*
+            Fit approximately 88% of the viewport.
+        */
+        worldScale = Math.min(width / worldWidth, height / worldHeight) * .88;
+      }
+      /* ============================================================
+         CENTER TREE
+      ============================================================ */
+      function centerTree() {
+        calculateWorldScale();
+        const all = Object.values(nodes);
+        if (!all.length) {
+          return;
+        }
+        const minX = Math.min(...all.map(n => n.x));
+        const maxX = Math.max(...all.map(n => n.x));
+        const minY = Math.min(...all.map(n => n.y));
+        const maxY = Math.max(...all.map(n => n.y));
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        camera.x = width / 2 - centerX * worldScale * camera.zoom;
+        camera.y = height / 2 - centerY * worldScale * camera.zoom;
+        render();
+      }
+      /* ============================================================
+         WORLD -> SCREEN
+      ============================================================ */
+      function worldToScreen(x, y) {
+        return {
+          x: camera.x + x * worldScale * camera.zoom,
+          y: camera.y + y * worldScale * camera.zoom
+        };
+      }
+      /* ============================================================
+         SCREEN -> WORLD
+      ============================================================ */
+      function screenToWorld(x, y) {
+        return {
+          x: (x - camera.x) / (worldScale * camera.zoom),
+          y: (y - camera.y) / (worldScale * camera.zoom)
+        };
+      }
+      /* ============================================================
+         RENDER
+      ============================================================ */
+      function render() {
+        if (!ctx || !canvas) {
+          return;
+        }
+        ctx.clearRect(0, 0, width, height);
+        /*
+            Draw the real GGG Atlas background from data.json.
+            The Atlas export includes several resolution levels for this
+            exact purpose; we render the highest supplied level and map its
+            pixel dimensions back into the Atlas world coordinate system.
+        */
+        drawAtlasBackground();
+        /*
+            Draw connections first.
+        */
+        drawConnections();
+        /*
+            Draw nodes.
+        */
+        Object.values(nodes).forEach(drawNode);
+        updateZoomDisplay();
+      }
+      /* ============================================================
+         REAL GGG ATLAS BACKGROUND
+      ============================================================ */
+      let atlasBackgroundImage = null;
+      let atlasBackgroundLoading = false;
+
+      function getAtlasBackgroundEntry() {
+        const bg = atlasData?.sprites?.atlasBackground;
+        if (!bg || typeof bg !== 'object') return null;
+        const entries = Object.entries(bg)
+          .map(([zoom, sheet]) => ({ zoom: Number(zoom), sheet }))
+          .filter(e => Number.isFinite(e.zoom) && e.sheet?.filename);
+        if (!entries.length) return null;
+        // Prefer the largest supplied source image.
+        return entries.sort((a, b) => b.zoom - a.zoom)[0].sheet;
+      }
+
+      function loadAtlasBackground() {
+        const entry = getAtlasBackgroundEntry();
+        if (!entry) return;
+        if (atlasBackgroundImage || atlasBackgroundLoading) return;
+        atlasBackgroundLoading = true;
+        const img = new Image();
+        img.onload = () => {
+          atlasBackgroundImage = img;
+          atlasBackgroundLoading = false;
+          render();
+        };
+        img.onerror = () => {
+          atlasBackgroundLoading = false;
+        };
+        img.src = entry.filename;
+      }
+
+      function drawAtlasBackground() {
+        const entry = getAtlasBackgroundEntry();
+        if (!entry) return;
+        if (!atlasBackgroundImage) {
+          loadAtlasBackground();
+          return;
+        }
+
+        const all = Object.values(nodes);
+        if (!all.length) return;
+
+        // Fit the real GGG Atlas artwork to the actual node layout.
+        // The exported atlas-background sprite is an artwork layer, not a
+        // 1:1 bounding box for the node coordinates.  The previous version
+        // converted its pixel size directly into world units, which made the
+        // background far too small for this Atlas.
+        const minX = Math.min(...all.map(n => n.x));
+        const maxX = Math.max(...all.map(n => n.x));
+        const minY = Math.min(...all.map(n => n.y));
+        const maxY = Math.max(...all.map(n => n.y));
+        const nodesW = Math.max(1, maxX - minX);
+        const nodesH = Math.max(1, maxY - minY);
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        const imageW = entry.w || atlasBackgroundImage.naturalWidth;
+        const imageH = entry.h || atlasBackgroundImage.naturalHeight;
+        const imageAspect = imageW / Math.max(1, imageH);
+
+        // Give the artwork a modest border around the outermost nodes while
+        // preserving the exact aspect ratio of the game's background.
+        const padding = 1.12;
+        let worldW = nodesW * padding;
+        let worldH = nodesH * padding;
+        if (worldW / worldH > imageAspect) {
+          worldH = worldW / imageAspect;
+        } else {
+          worldW = worldH * imageAspect;
+        }
+
+        const topLeft = worldToScreen(
+          centerX - worldW / 2,
+          centerY - worldH / 2
+        );
+        const bottomRight = worldToScreen(
+          centerX + worldW / 2,
+          centerY + worldH / 2
+        );
+
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(
+          atlasBackgroundImage,
+          topLeft.x,
+          topLeft.y,
+          bottomRight.x - topLeft.x,
+          bottomRight.y - topLeft.y
+        );
+        ctx.restore();
+      }
+
+      /* ============================================================
+         GRID
+      ============================================================ */
+      function drawGrid() {
+        const gridSize = 80 * camera.zoom;
+        if (gridSize < 20) {
+          return;
+        }
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,.025)';
+        ctx.lineWidth = 1;
+        const offsetX = camera.x % gridSize;
+        const offsetY = camera.y % gridSize;
+        for (let x = offsetX; x < width; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+          ctx.stroke();
+        }
+        for (let y = offsetY; y < height; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      /* ============================================================
+         DRAW CONNECTIONS
+      ============================================================ */
+      function drawConnections() {
+        const allocatedEdges = new Set();
+        connections.forEach(edge => {
+          const a = nodes[edge.a];
+          const b = nodes[edge.b];
+          if (!a || !b) {
+            return;
+          }
+          const pa = worldToScreen(a.x, a.y);
+          const pb = worldToScreen(b.x, b.y);
+          const bothAllocated = allocated.has(a.id) && allocated.has(b.id);
+          const oneAllocated = allocated.has(a.id) || allocated.has(b.id);
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+          if (bothAllocated) {
+            ctx.strokeStyle = 'rgba(232,198,109,.95)';
+            ctx.lineWidth = Math.max(2, 3 * camera.zoom);
+          } else if (oneAllocated) {
+            ctx.strokeStyle = 'rgba(215,180,93,.45)';
+            ctx.lineWidth = Math.max(1, 1.8 * camera.zoom);
+          } else {
+            ctx.strokeStyle = 'rgba(100,108,124,.30)';
+            ctx.lineWidth = Math.max(.7, 1 * camera.zoom);
+          }
+          ctx.stroke();
+        });
+      }
+      /* ============================================================
+         DRAW NODE
+      ============================================================ */
+      function spriteCategoryForNode(node) {
+        if (node.isKeystone) return allocated.has(node.id) ? 'keystoneActive' : 'keystoneInactive';
+        if (node.isNotable) return allocated.has(node.id) ? 'notableActive' : 'notableInactive';
+        return allocated.has(node.id) ? 'normalActive' : 'normalInactive';
+      }
+
+      function buildSpriteIndex() {
+        spriteEntries.clear();
+        const sprites = atlasData?.sprites || {};
+        for (const [category, scales] of Object.entries(sprites)) {
+          if (!scales || typeof scales !== 'object') continue;
+          for (const [scaleKey, sheet] of Object.entries(scales)) {
+            if (!sheet || !sheet.filename || !sheet.coords) continue;
+            const scale = Number(scaleKey);
+            for (const [icon, coord] of Object.entries(sheet.coords)) {
+              if (!coord || !Number.isFinite(Number(coord.x)) || !Number.isFinite(Number(coord.y))) continue;
+              const entry = { category, scale, filename: sheet.filename, coord };
+              if (!spriteEntries.has(icon)) spriteEntries.set(icon, []);
+              spriteEntries.get(icon).push(entry);
+            }
+          }
+        }
+      }
+
+      function getBestSprite(node) {
+        if (!node.icon) return null;
+        const list = spriteEntries.get(node.icon);
+        if (!list || !list.length) return null;
+        const wanted = spriteCategoryForNode(node);
+        const candidates = list.filter(e => e.category === wanted);
+        const pool = candidates.length ? candidates : list;
+        return pool.slice().sort((a, b) => (b.scale || 0) - (a.scale || 0))[0];
+      }
+
+      function getSpriteImage(entry) {
+        if (!entry) return null;
+        if (spriteSheets.has(entry.filename)) return spriteSheets.get(entry.filename);
+        if (!pendingSpriteLoads.has(entry.filename)) {
+          pendingSpriteLoads.add(entry.filename);
+          const img = new Image();
+          img.onload = () => {
+            spriteSheets.set(entry.filename, img);
+            pendingSpriteLoads.delete(entry.filename);
+            render();
+          };
+          img.onerror = () => pendingSpriteLoads.delete(entry.filename);
+          img.src = entry.filename;
+        }
+        return null;
+      }
+
+      // The real game draws the node icon INSIDE a separate circular frame.
+      // Both the icon sheets and the frame sheet are supplied by GGG in data.json.
+      function getBestFrame(node, state) {
+        const frames = atlasData?.sprites?.frame;
+        if (!frames || typeof frames !== 'object') return null;
+
+        const candidates = [];
+        for (const [scaleKey, sheet] of Object.entries(frames)) {
+          if (!sheet?.filename || !sheet?.coords) continue;
+          const scale = Number(scaleKey);
+          let key;
+          if (node.isKeystone) {
+            key = state === 'allocated' ? 'KeystoneFrameAllocated' :
+                  state === 'highlight' ? 'KeystoneFrameCanAllocate' : 'KeystoneFrameUnallocated';
+          } else if (node.isNotable) {
+            key = state === 'allocated' ? 'NotableFrameAllocated' :
+                  state === 'highlight' ? 'NotableFrameCanAllocate' : 'NotableFrameUnallocated';
+          } else {
+            key = state === 'allocated' ? 'PSSkillFrameActive' :
+                  state === 'highlight' ? 'PSSkillFrameHighlighted' : 'PSSkillFrame';
+          }
+          const coord = sheet.coords[key];
+          if (coord) candidates.push({ category: 'frame', scale, filename: sheet.filename, coord });
+        }
+        return candidates.sort((a,b) => (b.scale || 0) - (a.scale || 0))[0] || null;
+      }
+
+      function drawSprite(entry, dx, dy, dw, dh) {
+        const img = getSpriteImage(entry);
+        if (!img || !entry?.coord) return false;
+        const c = entry.coord;
+        ctx.drawImage(img, c.x, c.y, c.w, c.h, dx, dy, dw, dh);
+        return true;
+      }
+
+      function drawNode(node) {
+        const p = worldToScreen(node.x, node.y);
+        if (p.x < -150 || p.x > width + 150 || p.y < -150 || p.y > height + 150) return;
+
+        // Match the game's relative node sizes: normal < notable < keystone.
+        const baseFrame = node.isKeystone ? 24 : node.isNotable ? 18 : 12;
+        const size = baseFrame * Math.max(.55, Math.min(2.0, camera.zoom));
+        const isAllocated = allocated.has(node.id);
+        const isHover = currentHoverNode === node.id;
+        const isSearchMatch = searchMatchIds.has(node.id);
+        const state = isAllocated ? 'allocated' : (isHover ? 'highlight' : 'unallocated');
+
+        // Search highlight sits behind the actual game node graphics.
+        if (isSearchMatch) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, size * .78, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,70,70,.30)';
+          ctx.fill();
+          ctx.strokeStyle = '#ff3f3f';
+          ctx.lineWidth = Math.max(2, size * .10);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        const frame = getBestFrame(node, state);
+        const icon = getBestSprite(node);
+
+        // Draw the exact GGG frame first, then the icon inside it.
+        if (frame) {
+          drawSprite(frame, p.x - size / 2, p.y - size / 2, size, size);
+        } else {
+          // Only a compatibility fallback for a future JSON with no frame sprites.
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, size * .43, 0, Math.PI * 2);
+          ctx.fillStyle = isAllocated ? '#8f6d2d' : '#252a31';
+          ctx.fill();
+          ctx.strokeStyle = isAllocated ? '#d8b45d' : '#737a84';
+          ctx.lineWidth = Math.max(1, size * .05);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (icon) {
+          const c = icon.coord;
+          // GGG's icon sprite is smaller than its frame. Preserve that ratio.
+          const iconSize = size * Math.min(.68, c.w && c.h ? Math.min(34 / c.w, 34 / c.h) : .66);
+          drawSprite(icon, p.x - iconSize / 2, p.y - iconSize / 2, iconSize, iconSize);
+        }
+
+        // Search highlight remains visible over the real node.
+        if (isSearchMatch) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, size * .48, 0, Math.PI * 2);
+          ctx.strokeStyle = '#ff4d4d';
+          ctx.lineWidth = Math.max(2, size * .08);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Names are NEVER rendered on the Atlas itself. They are tooltip-only.
+      }
+      /* ============================================================
+         NODE HIT TEST
+      ============================================================ */
+      function findNodeAtScreen(screenX, screenY) {
+        const world = screenToWorld(screenX, screenY);
+        let closest = null;
+        let closestDistance = Infinity;
+        Object.values(nodes).forEach(node => {
+          const distance = Math.hypot(node.x - world.x, node.y - world.y);
+          const hitRadius = 14 / (worldScale * camera.zoom);
+          if (distance <= hitRadius && distance < closestDistance) {
+            closest = node;
+            closestDistance = distance;
+          }
+        });
+        return closest;
+      }
+      /* ============================================================
+         MOUSE
+      ============================================================ */
+      function getCanvasMousePosition(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top
+        };
+      }
+
+      function onMouseDown(event) {
+        const pos = getCanvasMousePosition(event);
+        mouse.down = true;
+        mouse.dragging = false;
+        mouse.lastX = pos.x;
+        mouse.lastY = pos.y;
+        canvas.classList.add('dragging');
+      }
+
+      function onMouseMove(event) {
+        const pos = getCanvasMousePosition(event);
+        mouse.x = pos.x;
+        mouse.y = pos.y;
+        if (mouse.down) {
+          const dx = pos.x - mouse.lastX;
+          const dy = pos.y - mouse.lastY;
+          if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+            mouse.dragging = true;
+          }
+          if (mouse.dragging) {
+            camera.x += dx;
+            camera.y += dy;
+            render();
+          }
+          mouse.lastX = pos.x;
+          mouse.lastY = pos.y;
+        }
+      }
+
+      function onMouseUp() {
+        mouse.down = false;
+        canvas.classList.remove('dragging');
+      }
+
+      function onCanvasClick(event) {
+        if (mouse.dragging) {
+          return;
+        }
+        const pos = getCanvasMousePosition(event);
+        const node = findNodeAtScreen(pos.x, pos.y);
+        if (!node) {
+          return;
+        }
+        toggleNode(node.id);
+      }
+      /* ============================================================
+         WHEEL ZOOM
+      ============================================================ */
+      function onWheel(event) {
+        event.preventDefault();
+        const pos = getCanvasMousePosition(event);
+        const before = screenToWorld(pos.x, pos.y);
+        const factor = event.deltaY < 0 ? 1.12 : 0.89;
+        const newZoom = Math.max(.15, Math.min(24, camera.zoom * factor));
+        camera.zoom = newZoom;
+        const after = worldToScreen(before.x, before.y);
+        camera.x += pos.x - after.x;
+        camera.y += pos.y - after.y;
+        render();
+      }
+      /* ============================================================
+         HOVER
+      ============================================================ */
+      function updateHover(event) {
+        const pos = getCanvasMousePosition(event);
+        const node = findNodeAtScreen(pos.x, pos.y);
+        if (node) {
+          if (currentHoverNode !== node.id) {
+            currentHoverNode = node.id;
+            showTooltip(node, event.clientX, event.clientY);
+            render();
+          } else {
+            moveTooltip(event.clientX, event.clientY);
+          }
+        } else {
+          if (currentHoverNode !== null) {
+            currentHoverNode = null;
+            hideTooltip();
+            render();
+          }
+        }
+      }
+      /* ============================================================
+         TOOLTIP
+      ============================================================ */
+      function showTooltip(node, clientX, clientY) {
+        const tooltip = document.getElementById('tooltip');
+        document.getElementById('tooltipName').textContent = node.name;
+        document.getElementById('tooltipType').textContent = node.type + (allocated.has(node.id) ? ' • Allocated' : '');
+        const statsElement = document.getElementById('tooltipStats');
+        statsElement.innerHTML = '';
+        if (node.stats.length) {
+          node.stats.forEach(stat => {
+            const div = document.createElement('div');
+            div.textContent = stat;
+            statsElement.appendChild(div);
+          });
+        } else {
+          statsElement.textContent = 'No description available in data.json.';
+        }
+        tooltip.classList.add('visible');
+        moveTooltip(clientX, clientY);
+      }
+
+      function moveTooltip(clientX, clientY) {
+        const tooltip = document.getElementById('tooltip');
+        const margin = 14;
+        let x = clientX + margin;
+        let y = clientY + margin;
+        const rect = tooltip.getBoundingClientRect();
+        if (x + rect.width > window.innerWidth - 10) {
+          x = clientX - rect.width - margin;
+        }
+        if (y + rect.height > window.innerHeight - 10) {
+          y = clientY - rect.height - margin;
+        }
+        tooltip.style.left = `${Math.max(5, x)}px`;
+        tooltip.style.top = `${Math.max(5, y)}px`;
+      }
+
+      function hideTooltip() {
+        document.getElementById('tooltip').classList.remove('visible');
+      }
+      /* ============================================================
+         ALLOCATION
+      ============================================================ */
+      function getNeighbors(nodeId) {
+        const result = [];
+        connections.forEach(edge => {
+          if (edge.a === nodeId) {
+            result.push(edge.b);
+          } else if (edge.b === nodeId) {
+            result.push(edge.a);
+          }
+        });
+        return result;
+      }
+      /*
+          A node is allocatable if:
+
+          - It is already allocated, OR
+          - It is the root, OR
+          - At least one connected node is allocated.
+      */
+      function canAllocate(nodeId) {
+        if (allocated.has(nodeId)) {
+          return true;
+        }
+        if (nodeId === rootNodeId) {
+          return true;
+        }
+        return getNeighbors(nodeId).some(id => allocated.has(id));
+      }
+      /*
+          Prevent removing a node if it would disconnect
+          nodes further along the tree.
+
+          We calculate whether every other allocated node
+          remains connected to the root after removal.
+      */
+      function canDeallocate(nodeId) {
+        if (!allocated.has(nodeId)) {
+          return false;
+        }
+        if (nodeId === rootNodeId) {
+          return false;
+        }
+        const remaining = new Set(allocated);
+        remaining.delete(nodeId);
+        if (remaining.size === 0) {
+          return true;
+        }
+        const start = rootNodeId && remaining.has(rootNodeId) ? rootNodeId : [...remaining][0];
+        const visited = new Set();
+        const queue = [
+          start
+        ];
+        while (queue.length) {
+          const current = queue.shift();
+          if (visited.has(current)) {
+            continue;
+          }
+          visited.add(current);
+          getNeighbors(current).forEach(neighbor => {
+            if (remaining.has(neighbor) && !visited.has(neighbor)) {
+              queue.push(neighbor);
+            }
+          });
+        }
+        return visited.size === remaining.size;
+      }
+      /* ============================================================
+         TOGGLE NODE
+      ============================================================ */
+      // Find the shortest valid path from the single Atlas start node
+      // (29045) to a clicked node. This lets the user click anywhere
+      // in the tree and automatically allocate the connecting passives.
+      function findPathFromStart(targetId) {
+        if (!nodes[targetId]) return null;
+        const startId = rootNodeId || '29045';
+        if (!nodes[startId]) return null;
+        if (startId === targetId) return [startId];
+
+        const queue = [startId];
+        const previous = new Map();
+        const visited = new Set([startId]);
+
+        while (queue.length) {
+          const current = queue.shift();
+          const neighbors = getNeighbors(current);
+
+          for (const neighbor of neighbors) {
+            if (visited.has(neighbor) || !nodes[neighbor]) continue;
+            visited.add(neighbor);
+            previous.set(neighbor, current);
+
+            if (neighbor === targetId) {
+              const path = [];
+              let cursor = targetId;
+              while (cursor !== undefined) {
+                path.push(cursor);
+                if (cursor === startId) break;
+                cursor = previous.get(cursor);
+              }
+              path.reverse();
+              return path[0] === startId ? path : null;
+            }
+            queue.push(neighbor);
+          }
+        }
+        return null;
+      }
+
+      function toggleNode(nodeId) {
+        const node = nodes[nodeId];
+        if (!node) return;
+
+        if (allocated.has(nodeId)) {
+          if (!canDeallocate(nodeId)) {
+            showStatusMessage('You cannot remove this node because it would disconnect other allocated nodes.');
+            return;
+          }
+          allocated.delete(nodeId);
+          showStatusMessage(`Removed: ${node.name || 'Atlas node'}`);
+          updateUI();
+          return;
+        }
+
+        // If the clicked node is already adjacent to the allocated tree,
+        // the path is naturally just that node. Otherwise automatically
+        // allocate the shortest path from 29045 to it.
+        const path = findPathFromStart(nodeId);
+        if (!path) {
+          showStatusMessage('Could not find a connected path from the Atlas start node.');
+          return;
+        }
+
+        const missing = path.filter(id => !allocated.has(id));
+        const cost = missing.reduce((sum, id) => sum + (nodes[id]?.cost || 1), 0);
+
+        if (cost > getRemainingPoints()) {
+          showStatusMessage(`Not enough Atlas points for this path (${cost} needed).`);
+          return;
+        }
+
+        missing.forEach(id => allocated.add(id));
+        showStatusMessage(
+          missing.length > 1
+            ? `Allocated path to ${node.name || 'Atlas node'} (${cost} points).`
+            : `Allocated: ${node.name || 'Atlas node'}`
+        );
+        updateUI();
+      }
+      /* ============================================================
+         UI
+      ============================================================ */
+      function updateUI() {
+        const allocatedPoints = getAllocatedPoints();
+        const remaining = Math.max(0, totalAtlasPoints - allocatedPoints);
+        document.getElementById('allocatedPoints').textContent = allocatedPoints;
+        document.getElementById('remainingPoints').textContent = remaining;
+        document.getElementById('totalPoints').textContent = totalAtlasPoints;
+        updateSearchResults();
+        render();
+      }
+
+      function getAllocatedPoints() {
+        let total = 0;
+        allocated.forEach(id => {
+          const node = nodes[id];
+          if (node) {
+            total += node.cost;
+          }
+        });
+        return total;
+      }
+
+      function getRemainingPoints() {
+        return Math.max(0, totalAtlasPoints - getAllocatedPoints());
+      }
+      /* ============================================================
+         SEARCH
+      ============================================================ */
+      function updateSearchResults() {
+        const input = document.getElementById('nodeSearch');
+        const query = input.value.trim().toLowerCase();
+        const container = document.getElementById('nodeResults');
+        container.innerHTML = '';
+        searchMatchIds.clear();
+        if (!query) {
+          searchResults = [];
+          render();
+          return;
+        }
+        searchResults = Object.values(nodes).filter(node => {
+          const haystack = [
+            node.name, ...node.stats,
+            node.type
+          ].join(' ').toLowerCase();
+          return haystack.includes(query);
+        });
+        searchResults.forEach(node => searchMatchIds.add(node.id));
+        searchResults = searchResults.slice(0, 100);
+        render();
+        if (searchResults.length === 0) {
+          container.innerHTML = '<div class="help" style="padding:10px;">No matching nodes.</div>';
+          return;
+        }
+        searchResults.forEach(node => {
+          const item = document.createElement('div');
+          item.className = 'node-result' + (allocated.has(node.id) ? ' allocated' : '');
+          item.innerHTML = `
+
+
+												<div class="node-result-name">
+                    ${escapeHtml(node.name)}
+                </div>
+												<div class="node-result-type">
+                    ${escapeHtml(node.type)}
+                </div>
+
+            `;
+          item.addEventListener('click',
+            () => {
+              focusNode(node);
+            });
+          container.appendChild(item);
+        });
+      }
+      /* ============================================================
+         FOCUS NODE
+      ============================================================ */
+      function focusNode(node) {
+        camera.x = width / 2 - node.x * worldScale * camera.zoom;
+        camera.y = height / 2 - node.y * worldScale * camera.zoom;
+        currentHoverNode = node.id;
+        showTooltip(node, width / 2, height / 2);
+        render();
+      }
+      /* ============================================================
+         STATUS
+      ============================================================ */
+      let statusTimer = null;
+
+      function showStatusMessage(message) {
+        const element = document.getElementById('status');
+        element.textContent = message;
+        element.classList.add('visible');
+        clearTimeout(statusTimer);
+        statusTimer = setTimeout(
+          () => {
+            element.classList.remove('visible');
+          }, 2500);
+      }
+      /* ============================================================
+         ZOOM BUTTONS
+      ============================================================ */
+      function zoomAtCenter(factor) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const before = screenToWorld(centerX, centerY);
+        camera.zoom = Math.max(.15, Math.min(24, camera.zoom * factor));
+        const after = worldToScreen(before.x, before.y);
+        camera.x += centerX - after.x;
+        camera.y += centerY - after.y;
+        render();
+      }
+
+      function updateZoomDisplay() {
+        const element = document.getElementById('zoomDisplay');
+        element.textContent = `${Math.round(camera.zoom * 100)}%`;
+      }
+      /* ============================================================
+         CONTROLS
+      ============================================================ */
+      function setupControls() {
+        document.getElementById('zoomIn').addEventListener('click',
+          () => zoomAtCenter(1.15));
+        document.getElementById('zoomOut').addEventListener('click',
+          () => zoomAtCenter(.87));
+        document.getElementById('zoomInCanvas').addEventListener('click',
+          () => zoomAtCenter(1.15));
+        document.getElementById('zoomOutCanvas').addEventListener('click',
+          () => zoomAtCenter(.87));
+        document.getElementById('centerTree').addEventListener('click',
+          () => {
+            camera.zoom = 1;
+            centerTree();
+          });
+        document.getElementById('clearSearch').addEventListener('click',
+          () => {
+            document.getElementById('nodeSearch').value = '';
+            updateSearchResults();
+          });
+        document.getElementById('nodeSearch').addEventListener('input', updateSearchResults);
+        document.getElementById('resetButton').addEventListener('click', resetTree);
+        document.getElementById('downloadBuild').addEventListener('click', downloadBuild);
+        document.getElementById('uploadBuildButton').addEventListener('click',
+          () => {
+            document.getElementById('buildFile').click();
+          });
+        document.getElementById('buildFile').addEventListener('change', uploadBuild);
+      }
+      /* ============================================================
+         RESET
+      ============================================================ */
+      function resetTree() {
+        if (allocated.size > 0 && !confirm('Reset the entire Atlas tree?')) {
+          return;
+        }
+        allocated.clear();
+        currentHoverNode = null;
+        hideTooltip();
+        updateUI();
+        showStatusMessage('Atlas tree reset.');
+      }
+      /* ============================================================
+         BUILD EXPORT
+      ============================================================ */
+      function downloadBuild() {
+        const build = {
+          format: 'PoE1 Atlas Builder',
+          version: 1,
+          atlasDataVersion: atlasData?.version || atlasData?.gameVersion || '3.29',
+          allocatedNodes: [...allocated]
+        };
+        const json = JSON.stringify(build, null, 2);
+        const blob = new Blob(
+          [json], {
+            type: 'application/json'
+          });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'poe-atlas-build.json';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        showStatusMessage('Atlas build downloaded.');
+      }
+      /* ============================================================
+         BUILD IMPORT
+      ============================================================ */
+      function uploadBuild(event) {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const build = JSON.parse(e.target.result);
+            if (!build || !Array.isArray(build.allocatedNodes)) {
+              throw new Error('Invalid build file.');
+            }
+            allocated.clear();
+            build.allocatedNodes.forEach(id => {
+              const node = nodes[String(id)];
+              if (node) {
+                allocated.add(String(id));
+              }
+            });
+            updateUI();
+            showStatusMessage('Atlas build uploaded.');
+          } catch (error) {
+            console.error(error);
+            showStatusMessage('Invalid Atlas build file.');
+          }
+          event.target.value = '';
+        };
+        reader.onerror = function() {
+          showStatusMessage('Could not read build file.');
+          event.target.value = '';
+        };
+        reader.readAsText(file);
+      }
+      /* ============================================================
+         ESCAPE HTML
+      ============================================================ */
+      function escapeHtml(value) {
+        return String(value).replace(/&/g, '&amp;').replace(/</g,
+          '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      /* ============================================================
+         LOADING ERROR
+      ============================================================ */
+      function showLoadingError(title, message) {
+        /*
+            Replace the normal application body with a clear
+            diagnostic message.
+        */
+        document.body.innerHTML = `
+
+
+											<div
+            style="
+                min-height:100vh;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:#0b0d12;
+                color:#e5e8ef;
+                font-family:
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    'Segoe UI',
+                    sans-serif;
+                padding:30px;
+            "
+        >
+												<div
+                style="
+                    max-width:700px;
+                    width:100%;
+                    background:#151922;
+                    border:1px solid #30374a;
+                    border-radius:8px;
+                    padding:25px;
+                    box-shadow:
+                        0 10px 40px rgba(0,0,0,.5);
+                "
+            >
+													<h1
+                    style="
+                        color:#e36b6b;
+                        margin:0 0 12px;
+                        font-size:22px;
+                    "
+                >
+                    ${escapeHtml(title)}
+                </h1>
+													<p
+                    style="
+                        color:#929bad;
+                        line-height:1.6;
+                    "
+                >
+                    ${escapeHtml(message)}
+                </p>
+													<hr
+                    style="
+                        border:none;
+                        border-top:1px solid #30374a;
+                        margin:20px 0;
+                    "
+                >
+														<p
+                    style="
+                        color:#e5e8ef;
+                        line-height:1.7;
+                        font-size:13px;
+                    "
+                >
+                    Make sure your folder looks like this:
+                </p>
+														<pre
+                    style="
+                        background:#0b0d12;
+                        padding:15px;
+                        border-radius:5px;
+                        color:#d1b06a;
+                        overflow:auto;
+                    "
+                >atlas-builder.html
+data.json</pre>
+														<p
+                    style="
+                        color:#929bad;
+                        font-size:12px;
+                        line-height:1.7;
+                    "
+                >
+                    Also make sure you are opening the HTML
+                    through a local web server rather than
+                    directly as a file:// URL.
+                </p>
+													</div>
+												</div>
+
+    `;
+      }
+          const sidebarElement = document.querySelector('.sidebar');
+      const panelToggle = document.getElementById('togglePanel');
+
+      function positionPanelToggle() {
+        if (!sidebarElement || !panelToggle) return;
+        if (document.body.classList.contains('panel-collapsed')) {
+          panelToggle.style.left = '0px';
+        } else {
+          panelToggle.style.left = `${sidebarElement.getBoundingClientRect().right}px`;
+        }
+      }
+
+      if (sidebarElement && panelToggle) {
+        positionPanelToggle();
+        window.addEventListener('resize', positionPanelToggle);
+      }
+      if (panelToggle) {
+        panelToggle.addEventListener('click', () => {
+          document.body.classList.toggle('panel-collapsed');
+          const collapsed = document.body.classList.contains('panel-collapsed');
+          panelToggle.textContent = collapsed ? '>' : '<';
+          panelToggle.title = collapsed ? 'Show controls' : 'Hide controls';
+          requestAnimationFrame(positionPanelToggle);
+        });
+      }
+</script>
+  </body>
+</html>
