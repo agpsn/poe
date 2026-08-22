@@ -1,3372 +1,1071 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>PoE 1 Map Modifier Calculator</title>
-
-<style>
-
-:root {
-    --bg-main: #0c0d12;
-    --bg-card: #151821;
-    --bg-sub: #1e2230;
-    --border-color: #2b3145;
-    --text-main: #e0e4f0;
-    --text-muted: #8e99b0;
-
-    --poe-gold: #af9047;
-    --poe-quant: #c5a059;
-    --poe-rarity: #6cb8ff;
-    --poe-pack: #50e3c2;
-
-    --danger: #e74c3c;
-    --danger-hover: #c0392b;
-
-    --btn-bg: #272d3f;
-    --btn-hover: #373e56;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Oxygen,
-        Ubuntu,
-        Cantarell,
-        sans-serif;
-}
-
-body {
-    background: var(--bg-main);
-    color: var(--text-main);
-
-    padding: 24px 16px;
-
-    line-height: 1.5;
-}
-
-.container {
-    max-width: 1250px;
-    margin: 0 auto;
-}
-
-/* HEADER */
-
-header {
-    padding: 14px;
-    margin-bottom: 24px;
-
-    text-align: center;
-
-    background: #333;
-
-    border-radius: 6px;
-}
-
-header nav {
-    margin-bottom: 18px;
-}
-
-nav a {
-    display: inline-block;
-
-    padding: 10px 20px;
-    margin-right: 10px;
-
-    background: #555;
-
-    color: white;
-
-    text-decoration: none;
-
-    border-radius: 5px;
-}
-
-nav a:hover {
-    background: #777;
-}
-
-header h1 {
-    color: var(--poe-gold);
-
-    font-size: 1.8rem;
-
-    margin-bottom: 6px;
-
-    letter-spacing: 0.5px;
-
-    text-shadow:
-        0 0 10px rgba(175, 144, 71, 0.3);
-}
-
-header p {
-    color: var(--text-muted);
-
-    font-size: 0.95rem;
-}
-
-/* PRESETS */
-
-.preset-bar {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 8px;
-
-    margin-bottom: 20px;
-}
-
-.preset-label {
-    font-size: 0.85rem;
-
-    color: var(--text-muted);
-
-    align-self: center;
-
-    margin-right: 4px;
-}
-
-/* BUTTONS */
-
-.btn {
-    background: var(--btn-bg);
-
-    color: var(--text-main);
-
-    border: 1px solid var(--border-color);
-
-    padding: 7px 12px;
-
-    border-radius: 4px;
-
-    cursor: pointer;
-
-    font-size: 0.85rem;
-
-    transition: all 0.2s;
-}
-
-.btn:hover {
-    background: var(--btn-hover);
-
-    border-color: var(--poe-gold);
-}
-
-.btn-danger {
-    background: rgba(231, 76, 60, 0.15);
-
-    border-color: var(--danger);
-
-    color: #ff8578;
-}
-
-.btn-danger:hover {
-    background: var(--danger);
-
-    color: #fff;
-}
-
-/* CARDS */
-
-.card {
-    background: var(--bg-card);
-
-    border: 1px solid var(--border-color);
-
-    border-radius: 8px;
-
-    padding: 20px;
-
-    box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.card-title {
-    color: var(--poe-gold);
-
-    font-size: 1.15rem;
-
-    font-weight: 600;
-
-    margin-bottom: 16px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    border-bottom:
-        1px solid var(--border-color);
-
-    padding-bottom: 8px;
-}
-
-/* IMPORT EXPORT */
-
-.import-export-actions {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 8px;
-
-    align-items: center;
-}
-
-.import-status {
-    font-size: 0.8rem;
-
-    color: var(--text-muted);
-
-    margin-left: 4px;
-}
-
-/* MAIN GRID */
-
-.grid {
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 20px;
-}
-
-@media (max-width: 900px) {
-
-    .grid {
-        grid-template-columns: 1fr;
-    }
-
-}
-
-/* CONTROLS */
-
-.control-group {
-    margin-bottom: 14px;
-}
-
-.control-group label {
-    display: block;
-
-    font-size: 0.85rem;
-
-    color: var(--text-muted);
-
-    margin-bottom: 4px;
-}
-
-input[type="number"],
-input[type="text"],
-select {
-    background: var(--bg-sub);
-
-    border: 1px solid var(--border-color);
-
-    color: var(--text-main);
-
-    padding: 8px 12px;
-
-    border-radius: 4px;
-
-    width: 100%;
-
-    font-size: 0.9rem;
-
-    outline: none;
-}
-
-input[type="number"]:focus,
-input[type="text"]:focus,
-select:focus {
-    border-color: var(--poe-gold);
-}
-
-.checkbox-row {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 16px;
-
-    margin-top: 6px;
-}
-
-.checkbox-label {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    font-size: 0.85rem;
-
-    cursor: pointer;
-
-    user-select: none;
-}
-
-.checkbox-label input {
-    accent-color: var(--poe-gold);
-
-    width: 16px;
-    height: 16px;
-}
-
-/* MODIFIER PICKER */
-
-.mod-picker-section {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 10px;
-}
-
-.mod-search {
-    width: 100%;
-}
-
-/* SORT BAR */
-
-.sort-bar {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 6px;
-
-    align-items: center;
-
-    padding: 8px;
-
-    background: var(--bg-sub);
-
-    border: 1px solid var(--border-color);
-
-    border-radius: 5px;
-}
-
-.sort-label {
-    color: var(--text-muted);
-
-    font-size: 0.8rem;
-
-    margin-right: 4px;
-}
-
-.sort-btn {
-    background: transparent;
-
-    color: var(--text-muted);
-
-    border: 1px solid var(--border-color);
-
-    padding: 5px 9px;
-
-    border-radius: 4px;
-
-    cursor: pointer;
-
-    font-size: 0.78rem;
-}
-
-.sort-btn:hover {
-    color: white;
-
-    border-color: var(--poe-gold);
-}
-
-.sort-btn.active {
-    color: white;
-
-    background: rgba(175, 144, 71, 0.2);
-
-    border-color: var(--poe-gold);
-}
-
-/* MOD LIST */
-
-.mod-select-list {
-    max-height: 390px;
-
-    overflow-y: auto;
-
-    border: 1px solid var(--border-color);
-
-    border-radius: 4px;
-
-    background: var(--bg-sub);
-}
-
-.mod-option-item {
-    padding: 9px 12px;
-
-    font-size: 0.84rem;
-
-    cursor: pointer;
-
-    border-bottom:
-        1px solid rgba(255, 255, 255, 0.05);
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 12px;
-
-    transition: background 0.15s;
-}
-
-.mod-option-item:hover {
-    background:
-        rgba(175, 144, 71, 0.15);
-}
-
-.mod-option-name {
-    flex: 1;
-}
-
-.mod-tags {
-    display: flex;
-
-    gap: 7px;
-
-    font-size: 0.72rem;
-
-    white-space: nowrap;
-}
-
-.badge-quant {
-    color: var(--poe-quant);
-}
-
-.badge-rarity {
-    color: var(--poe-rarity);
-}
-
-.badge-pack {
-    color: var(--poe-pack);
-}
-
-.badge-tier {
-    color: #ff9800;
-
-    font-weight: bold;
-}
-
-/* ACTIVE MODIFIERS */
-
-.active-mods-list {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 8px;
-
-    min-height: 60px;
-}
-
-.active-mod-card {
-    background: var(--bg-sub);
-
-    border: 1px solid var(--border-color);
-
-    border-left:
-        3px solid var(--poe-gold);
-
-    padding: 10px 12px;
-
-    border-radius: 4px;
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 12px;
-}
-
-.active-mod-info {
-    flex-grow: 1;
-}
-
-.active-mod-name {
-    font-size: 0.9rem;
-
-    color: #fff;
-
-    margin-bottom: 3px;
-}
-
-.active-mod-stats {
-    font-size: 0.78rem;
-
-    color: var(--text-muted);
-
-    display: flex;
-
-    gap: 10px;
-
-    flex-wrap: wrap;
-}
-
-.btn-remove-mod {
-    background: transparent;
-
-    border:
-        1px solid rgba(231, 76, 60, 0.4);
-
-    color: #ff7666;
-
-    padding: 4px 8px;
-
-    font-size: 0.75rem;
-
-    border-radius: 3px;
-
-    cursor: pointer;
-
-    flex-shrink: 0;
-}
-
-.btn-remove-mod:hover {
-    background: var(--danger);
-
-    color: white;
-
-    border-color: var(--danger);
-}
-
-.empty-state {
-    text-align: center;
-
-    color: var(--text-muted);
-
-    padding: 20px;
-
-    font-style: italic;
-
-    font-size: 0.85rem;
-}
-
-/* LIMIT */
-
-.mod-limit {
-    font-size: 0.8rem;
-
-    color: var(--text-muted);
-}
-
-.mod-limit.limit-reached {
-    color: #ff7666;
-
-    font-weight: bold;
-}
-
-/* CUSTOM */
-
-.custom-mod-grid {
-    display: grid;
-
-    grid-template-columns:
-        2fr 1fr 1fr 1fr auto;
-
-    gap: 6px;
-
-    align-items: center;
-
-    margin-top: 10px;
-}
-
-@media (max-width: 650px) {
-
-    .custom-mod-grid {
+<!doctypehtml>
+  <html lang=en>
+    <meta charset=UTF-8>
+    <meta content="width=device-width,initial-scale=1" name=viewport>
+    <title>Map Calculator</title>
+    <style>
+      :root {
+        --bg-main: #0c0d12;
+        --bg-card: #151821;
+        --bg-sub: #1e2230;
+        --border-color: #2b3145;
+        --text-main: #e0e4f0;
+        --text-muted: #8e99b0;
+        --poe-gold: #af9047;
+        --poe-quant: #c5a059;
+        --poe-rarity: #6cb8ff;
+        --poe-pack: #50e3c2;
+        --danger: #e74c3c;
+        --danger-hover: #c0392b;
+        --btn-bg: #272d3f;
+        --btn-hover: #373e56
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif
+      }
+
+      body {
+        background: var(--bg-main);
+        color: var(--text-main);
+        padding: 24px 16px;
+        line-height: 1.5
+      }
+
+      .container {
+        max-width: 1250px;
+        margin: 0 auto
+      }
+
+      header {
+        padding: 14px;
+        margin-bottom: 24px;
+        text-align: center;
+        background: #333;
+        border-radius: 6px
+      }
+
+      header nav {
+        margin-bottom: 18px
+      }
+
+      nav a {
+        display: inline-block;
+        padding: 10px 20px;
+        margin-right: 10px;
+        background: #555;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px
+      }
+
+      nav a:hover {
+        background: #777
+      }
+
+      header h1 {
+        color: var(--poe-gold);
+        font-size: 1.8rem;
+        margin-bottom: 6px;
+        letter-spacing: .5px;
+        text-shadow: 0 0 10px rgba(175, 144, 71, .3)
+      }
+
+      header p {
+        color: var(--text-muted);
+        font-size: .95rem
+      }
+
+      .preset-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px
+      }
+
+      .preset-label {
+        font-size: .85rem;
+        color: var(--text-muted);
+        align-self: center;
+        margin-right: 4px
+      }
+
+      .btn {
+        background: var(--btn-bg);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+        padding: 7px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: .85rem;
+        transition: all .2s
+      }
+
+      .btn:hover {
+        background: var(--btn-hover);
+        border-color: var(--poe-gold)
+      }
+
+      .btn-danger {
+        background: rgba(231, 76, 60, .15);
+        border-color: var(--danger);
+        color: #ff8578
+      }
+
+      .btn-danger:hover {
+        background: var(--danger);
+        color: #fff
+      }
+
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .4)
+      }
+
+      .card-title {
+        color: var(--poe-gold);
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px
+      }
+
+      .import-export-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center
+      }
+
+      .import-status {
+        font-size: .8rem;
+        color: var(--text-muted);
+        margin-left: 4px
+      }
+
+      .grid {
+        display: grid;
         grid-template-columns: 1fr 1fr;
-    }
+        gap: 20px
+      }
 
-}
+      @media (max-width:900px) {
+        .grid {
+          grid-template-columns: 1fr
+        }
+      }
 
-/* STATS */
+      .control-group {
+        margin-bottom: 14px
+      }
 
-.stats-summary {
-    display: grid;
+      .control-group label {
+        display: block;
+        font-size: .85rem;
+        color: var(--text-muted);
+        margin-bottom: 4px
+      }
 
-    grid-template-columns:
-        repeat(3, 1fr);
+      input[type=number],
+      input[type=text],
+      select {
+        background: var(--bg-sub);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 8px 12px;
+        border-radius: 4px;
+        width: 100%;
+        font-size: .9rem;
+        outline: 0
+      }
 
-    gap: 12px;
+      input[type=number]:focus,
+      input[type=text]:focus,
+      select:focus {
+        border-color: var(--poe-gold)
+      }
 
-    margin-bottom: 20px;
-}
+      .checkbox-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 6px
+      }
 
-.stat-box {
-    background: var(--bg-sub);
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: .85rem;
+        cursor: pointer;
+        user-select: none
+      }
 
-    border: 1px solid var(--border-color);
+      .checkbox-label input {
+        accent-color: var(--poe-gold);
+        width: 16px;
+        height: 16px
+      }
 
-    border-radius: 6px;
-
-    padding: 12px 10px;
-
-    text-align: center;
-}
-
-.stat-label {
-    font-size: 0.8rem;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.5px;
-
-    color: var(--text-muted);
-
-    margin-bottom: 4px;
-}
-
-.stat-value {
-    font-size: 1.6rem;
-
-    font-weight: 700;
-}
-
-.stat-quant .stat-value {
-    color: var(--poe-quant);
-}
-
-.stat-rarity .stat-value {
-    color: var(--poe-rarity);
-}
-
-.stat-pack .stat-value {
-    color: var(--poe-pack);
-}
-
-/* TABLE */
-
-.calc-table {
-    width: 100%;
-
-    border-collapse: collapse;
-
-    font-size: 0.82rem;
-
-    margin-top: 12px;
-}
-
-.calc-table th,
-.calc-table td {
-    padding: 6px 8px;
-
-    text-align: left;
-
-    border-bottom:
-        1px solid var(--border-color);
-}
-
-.calc-table th {
-    color: var(--text-muted);
-
-    font-weight: 500;
-}
-
-.calc-table tr:last-child td {
-    border-bottom: none;
-
-    font-weight: bold;
-}
-
-.text-right {
-    text-align: right !important;
-}
-
-/* PRESET ACTIVE */
-
-.preset-active {
-    border-color: var(--poe-gold);
-
-    background:
-        rgba(175, 144, 71, 0.18);
-}
-
-/* RESPONSIVE */
-
-@media (max-width: 600px) {
-
-    .stats-summary {
-        grid-template-columns: 1fr;
-    }
-
-    .active-mod-card {
-        align-items: flex-start;
-    }
-
-    .mod-option-item {
-        align-items: flex-start;
-
+      .mod-picker-section {
+        display: flex;
         flex-direction: column;
-    }
-
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<header>
-
-<nav>
-    <a href="index.html">Home</a>
-    <a href="kingsmarch-calculator.html">
-        Kingsmarch Calculator
-    </a>
-    <a href="map-calculator.html">
-        Map Calculator
-    </a>
-</nav>
-
-<h1>
-    PoE 1 Map Modifier Calculator
-</h1>
-
-<p>
-    Simulate Item Quantity, Item Rarity, and Monster Pack Size
-    with Atlas Passives & Map Scaling
-</p>
-
-</header>
-
-
-<!-- ============================================================
-     PRESETS
-============================================================ -->
-
-<div class="preset-bar">
-
-<span class="preset-label">
-    Presets:
-</span>
-
-<button
-    class="btn"
-    id="presetSafe"
-    onclick="applyPreset('safe')"
->
-    Max (Safe)
-</button>
-
-<button
-    class="btn"
-    id="presetMax"
-    onclick="applyPreset('max')"
->
-    Max
-</button>
-
-<button
-    class="btn"
-    id="presetT16"
-    onclick="applyPreset('t16')"
->
-    T16 Max
-</button>
-
-<button
-    class="btn"
-    id="presetT17"
-    onclick="applyPreset('t17')"
->
-    T17 Max
-</button>
-
-<button
-    class="btn btn-danger"
-    onclick="clearAllModifiers()"
->
-    Reset All
-</button>
-
-</div>
-
-
-<!-- ============================================================
-     IMPORT / EXPORT
-============================================================ -->
-
-<div
-    class="card"
-    style="margin-bottom:20px;"
->
-
-<div class="card-title">
-
-<span>
-    Import / Export
-</span>
-
-<span
-    style="
-        font-size:0.8rem;
-        font-weight:normal;
-        color:var(--text-muted);
-    "
->
-    Save or load calculator setups
-</span>
-
-</div>
-
-<div class="import-export-actions">
-
-<button
-    class="btn"
-    onclick="downloadSetup()"
->
-    Download Setup
-</button>
-
-<button
-    class="btn"
-    onclick="document.getElementById('setupFile').click()"
->
-    Upload Setup
-</button>
-
-<input
-    type="file"
-    id="setupFile"
-    accept=".json,application/json"
-    style="display:none"
-    onchange="uploadSetup(event)"
->
-
-<span
-    id="importStatus"
-    class="import-status"
-></span>
-
-</div>
-
-</div>
-
-
-<div class="grid">
-
-
-<!-- ============================================================
-     LEFT COLUMN
-============================================================ -->
-
-<div>
-
-
-<!-- ATLAS SETTINGS -->
-
-<div
-    class="card"
-    style="margin-bottom:20px;"
->
-
-<div class="card-title">
-    <span>
-        Atlas Passives & Base Quality
-    </span>
-</div>
-
-
-<div
-    style="
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:12px;
-    "
->
-
-<div class="control-group">
-
-<label for="explicitEffect">
-    Increased Effect of Explicit Modifiers (%)
-</label>
-
-<input
-    type="number"
-    id="explicitEffect"
-    value="32"
-    min="0"
-    max="200"
-    step="1"
-    oninput="calculate()"
->
-
-<small
-    style="
-        color:var(--text-muted);
-        font-size:0.75rem;
-    "
->
-    From Atlas Tree wheel nodes
-</small>
-
-</div>
-
-
-<div class="control-group">
-
-<label for="mapQuality">
-    Map Quality (%) [Chisels]
-</label>
-
-<input
-    type="number"
-    id="mapQuality"
-    value="0"
-    min="0"
-    max="20"
-    step="1"
-    oninput="calculate()"
->
-
-</div>
-
-</div>
-
-
-<div
-    style="
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:12px;
-        margin-top:6px;
-    "
->
-
-<div class="control-group">
-
-<label for="atlasFlatQuant">
-    Atlas Flat Item Quantity (%)
-</label>
-
-<input
-    type="number"
-    id="atlasFlatQuant"
-    value="15"
-    min="0"
-    max="100"
-    step="1"
-    oninput="calculate()"
->
-
-</div>
-
-
-<div class="control-group">
-
-<label for="atlasFlatRarity">
-    Atlas Flat Item Rarity (%)
-</label>
-
-<input
-    type="number"
-    id="atlasFlatRarity"
-    value="14"
-    min="0"
-    max="100"
-    step="1"
-    oninput="calculate()"
->
-
-</div>
-
-</div>
-
-
-<div class="checkbox-row">
-
-<label class="checkbox-label">
-
-<input
-    type="checkbox"
-    id="unidMap"
-    onchange="calculate()"
->
-
-<span>
-    Unidentified Map Bonus (+30% Quant)
-</span>
-
-</label>
-
-
-<label class="checkbox-label">
-
-<input
-    type="checkbox"
-    id="mapDeviceCraft"
-    onchange="calculate()"
->
-
-<span>
-    Map Device Craft / Infused (+8% Quant)
-</span>
-
-</label>
-
-</div>
-
-</div>
-
-
-<!-- MODIFIER SELECTOR -->
-
-<div class="card">
-
-<div class="card-title">
-
-<span>
-    Add Map Modifiers
-</span>
-
-<span
-    id="modLimitDisplay"
-    class="mod-limit"
->
-    0 / 8 explicit modifiers
-</span>
-
-</div>
-
-
-<div class="mod-picker-section">
-
-<input
-    type="text"
-    id="modSearch"
-    class="mod-search"
-    placeholder="Search modifiers..."
-    oninput="filterModList()"
->
-
-
-<div class="sort-bar">
-
-<span class="sort-label">
-    Sort by:
-</span>
-
-<button
-    class="sort-btn active"
-    id="sortDefault"
-    onclick="setSort('default')"
->
-    Default
-</button>
-
-<button
-    class="sort-btn"
-    id="sortQuant"
-    onclick="setSort('quant')"
->
-    Quantity ↓
-</button>
-
-<button
-    class="sort-btn"
-    id="sortRarity"
-    onclick="setSort('rarity')"
->
-    Rarity ↓
-</button>
-
-<button
-    class="sort-btn"
-    id="sortPack"
-    onclick="setSort('pack')"
->
-    Pack Size ↓
-</button>
-
-</div>
-
-
-<div
-    class="mod-select-list"
-    id="modListContainer"
-></div>
-
-</div>
-
-
-<!-- CUSTOM MOD -->
-
-<div
-    style="
-        border-top:1px solid var(--border-color);
-        padding-top:12px;
-        margin-top:14px;
-    "
->
-
-<span
-    style="
-        font-size:0.85rem;
-        font-weight:600;
-        color:var(--text-muted);
-    "
->
-    Add Custom Explicit Modifier:
-</span>
-
-<div class="custom-mod-grid">
-
-<input
-    type="text"
-    id="customName"
-    placeholder="Modifier text"
->
-
-<input
-    type="number"
-    id="customQuant"
-    placeholder="+Quant %"
->
-
-<input
-    type="number"
-    id="customRarity"
-    placeholder="+Rarity %"
->
-
-<input
-    type="number"
-    id="customPack"
-    placeholder="+Pack %"
->
-
-<button
-    class="btn"
-    style="height:38px;"
-    onclick="addCustomMod()"
->
-    Add
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- ============================================================
-     RIGHT COLUMN
-============================================================ -->
-
-<div>
-
-
-<!-- OUTPUT -->
-
-<div
-    class="card"
-    style="margin-bottom:20px;"
->
-
-<div class="card-title">
-
-<span>
-    Simulated Map Output
-</span>
-
-<span
-    style="
-        font-size:0.8rem;
-        color:var(--poe-gold);
-    "
->
-    Live Calculation
-</span>
-
-</div>
-
-
-<div class="stats-summary">
-
-
-<div class="stat-box stat-quant">
-
-<div class="stat-label">
-    Item Quantity
-</div>
-
-<div
-    class="stat-value"
-    id="totalQuant"
->
-    0%
-</div>
-
-</div>
-
-
-<div class="stat-box stat-rarity">
-
-<div class="stat-label">
-    Item Rarity
-</div>
-
-<div
-    class="stat-value"
-    id="totalRarity"
->
-    0%
-</div>
-
-</div>
-
-
-<div class="stat-box stat-pack">
-
-<div class="stat-label">
-    Monster Pack Size
-</div>
-
-<div
-    class="stat-value"
-    id="totalPack"
->
-    0%
-</div>
-
-</div>
-
-</div>
-
-
-<table class="calc-table">
-
-<thead>
-
-<tr>
-
-<th>
-    Source Component
-</th>
-
-<th class="text-right">
-    Quantity
-</th>
-
-<th class="text-right">
-    Rarity
-</th>
-
-<th class="text-right">
-    Pack Size
-</th>
-
-</tr>
-
-</thead>
-
-
-<tbody>
-
-<tr>
-
-<td>
-    Base Explicit Mods (Sum)
-</td>
-
-<td
-    class="text-right"
-    id="baseQuantSum"
->
-    0%
-</td>
-
-<td
-    class="text-right"
-    id="baseRaritySum"
->
-    0%
-</td>
-
-<td
-    class="text-right"
-    id="basePackSum"
->
-    0%
-</td>
-
-</tr>
-
-
-<tr>
-
-<td>
-    Explicit Mod Effect
-    (<span id="explicitEffectDisplay">+32%</span>)
-</td>
-
-<td
-    class="text-right"
-    id="scaledExplicitQuant"
->
-    +0%
-</td>
-
-<td
-    class="text-right"
-    id="scaledExplicitRarity"
->
-    +0%
-</td>
-
-<td
-    class="text-right"
-    id="scaledExplicitPack"
->
-    +0%
-</td>
-
-</tr>
-
-
-<tr>
-
-<td>
-    Map Quality
-</td>
-
-<td
-    class="text-right"
-    id="qualityQuantDisplay"
->
-    +0%
-</td>
-
-<td class="text-right">
-    -
-</td>
-
-<td class="text-right">
-    -
-</td>
-
-</tr>
-
-
-<tr>
-
-<td>
-    Atlas Flat & Device Bonuses
-</td>
-
-<td
-    class="text-right"
-    id="flatBonusesQuantDisplay"
->
-    +0%
-</td>
-
-<td
-    class="text-right"
-    id="flatBonusesRarityDisplay"
->
-    +0%
-</td>
-
-<td class="text-right">
-    -
-</td>
-
-</tr>
-
-
-<tr
-    style="
-        color:var(--poe-gold);
-    "
->
-
-<td>
-    Final Map Properties
-</td>
-
-<td
-    class="text-right"
-    id="finalQuantSummary"
->
-    0%
-</td>
-
-<td
-    class="text-right"
-    id="finalRaritySummary"
->
-    0%
-</td>
-
-<td
-    class="text-right"
-    id="finalPackSummary"
->
-    0%
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</div>
-
-
-<!-- ACTIVE MODIFIERS -->
-
-<div class="card">
-
-<div class="card-title">
-
-<span>
-    Active Modifiers Breakdown
-</span>
-
-<span
-    style="
-        font-size:0.8rem;
-        color:var(--text-muted);
-    "
-    id="activeModCount"
->
-    0 active mods
-</span>
-
-</div>
-
-
-<div
-    class="active-mods-list"
-    id="activeModsContainer"
->
-
-<div class="empty-state">
-    No modifiers selected yet.
-    Select modifiers from the list or choose a preset.
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<script>
-
-/* ============================================================
-   MODIFIER DATABASE
-============================================================ */
-
-const MOD_DATABASE = [
-
-{
-    id: 'extra_cold',
-    name: 'Monsters deal (50-70)% extra physical damage as cold',
-    quant: 16,
-    rarity: 9,
-    pack: 6,
-    tier: 'High Threat'
-},
-
-{
-    id: 'extra_lightning',
-    name: 'Monsters deal (50-70)% extra physical damage as lightning',
-    quant: 16,
-    rarity: 9,
-    pack: 6,
-    tier: 'High Threat'
-},
-
-{
-    id: 'extra_chaos',
-    name: 'Monsters gain (25-35)% of Physical as Extra Chaos',
-    quant: 16,
-    rarity: 9,
-    pack: 6,
-    tier: 'High Threat'
-},
-
-{
-    id: 'minus_max_res',
-    name: '-(9-12)% maximum Player Resistances',
-    quant: 18,
-    rarity: 10,
-    pack: 7,
-    tier: 'Very High'
-},
-
-{
-    id: 'no_regen',
-    name: 'Players cannot Regenerate Life, Mana or Energy Shield',
-    quant: 16,
-    rarity: 9,
-    pack: 6,
-    tier: 'High Threat'
-},
-
-{
-    id: 'less_recovery',
-    name: '60% less Recovery Rate of Life and Energy Shield',
-    quant: 15,
-    rarity: 8,
-    pack: 5,
-    tier: 'High Threat'
-},
-
-{
-    id: 'ele_reflect',
-    name: 'Monsters reflect 18% of Elemental Damage',
-    quant: 13,
-    rarity: 7,
-    pack: 5,
-    tier: 'Dangerous'
-},
-
-{
-    id: 'phys_reflect',
-    name: 'Monsters reflect 18% of Physical Damage',
-    quant: 13,
-    rarity: 7,
-    pack: 5,
-    tier: 'Dangerous'
-},
-
-{
-    id: 'extra_proj',
-    name: 'Monsters fire 2 additional Projectiles',
-    quant: 15,
-    rarity: 8,
-    pack: 5,
-    tier: 'High Threat'
-},
-
-{
-    id: 'crit_multi',
-    name: 'Monsters have +(300-400)% to Critical Strike Multiplier',
-    quant: 14,
-    rarity: 8,
-    pack: 5,
-    tier: 'Dangerous'
-},
-
-{
-    id: 'ele_weakness',
-    name: 'Players are Cursed with Elemental Weakness',
-    quant: 12,
-    rarity: 7,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'vuln_curse',
-    name: 'Players are Cursed with Vulnerability',
-    quant: 12,
-    rarity: 7,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'temp_chains',
-    name: 'Players are Cursed with Temporal Chains',
-    quant: 12,
-    rarity: 7,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'turbo',
-    name: 'Monsters have (30-40)% increased Attack/Cast/Move Speed',
-    quant: 14,
-    rarity: 8,
-    pack: 5,
-    tier: 'Dangerous'
-},
-
-{
-    id: 'monster_life',
-    name: 'Monsters have (40-50)% more Maximum Life',
-    quant: 11,
-    rarity: 6,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'cannot_leech',
-    name: 'Cannot Leech Life from Monsters',
-    quant: 14,
-    rarity: 8,
-    pack: 5,
-    tier: 'Dangerous'
-},
-
-{
-    id: 'desecrated_ground',
-    name: 'Area has patches of Desecrated Ground',
-    quant: 10,
-    rarity: 6,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'burning_ground',
-    name: 'Area has patches of Burning Ground',
-    quant: 10,
-    rarity: 6,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'shattered_ground',
-    name: 'Area has patches of Chilled Ground',
-    quant: 10,
-    rarity: 6,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'shocking_ground',
-    name: 'Area has patches of Shocked Ground',
-    quant: 10,
-    rarity: 6,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 'avoid_ailments',
-    name: 'Monsters have 70% chance to Avoid Elemental Ailments',
-    quant: 11,
-    rarity: 6,
-    pack: 4,
-    tier: 'Standard'
-},
-
-{
-    id: 't17_union_souls',
-    name: '[T17] Monsters gain Union of Souls on Death',
-    quant: 24,
-    rarity: 15,
-    pack: 10,
-    tier: 'T17 Exclusive'
-},
-
-{
-    id: 't17_meteors',
-    name: '[T17] Players are targeted by a Meteor on skill use',
-    quant: 25,
-    rarity: 16,
-    pack: 10,
-    tier: 'T17 Exclusive'
-},
-
-{
-    id: 't17_drowning',
-    name: '[T17] Area contains Drowning Orbs',
-    quant: 25,
-    rarity: 16,
-    pack: 10,
-    tier: 'T17 Exclusive'
-},
-
-{
-    id: 't17_petrification',
-    name: '[T17] Monsters inflict Petrification on Hit',
-    quant: 22,
-    rarity: 14,
-    pack: 9,
-    tier: 'T17 Exclusive'
-},
-
-{
-    id: 't17_sawblades',
-    name: '[T17] Area contains spinning Sawblades',
-    quant: 23,
-    rarity: 15,
-    pack: 9,
-    tier: 'T17 Exclusive'
-}
-
-];
-
-
-/* ============================================================
-   STATE
-============================================================ */
-
-let activeMods = [];
-
-let customModCounter = 1;
-
-let currentSort = 'default';
-
-const MAX_EXPLICIT_MODS = 8;
-
-
-/* ============================================================
-   SORTING
-============================================================ */
-
-function setSort(sortType) {
-
-    currentSort = sortType;
-
-    document
-        .querySelectorAll('.sort-btn')
-        .forEach(button => {
-            button.classList.remove('active');
+        gap: 10px
+      }
+
+      .mod-search {
+        width: 100%
+      }
+
+      .sort-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        padding: 8px;
+        background: var(--bg-sub);
+        border: 1px solid var(--border-color);
+        border-radius: 5px
+      }
+
+      .sort-label {
+        color: var(--text-muted);
+        font-size: .8rem;
+        margin-right: 4px
+      }
+
+      .sort-btn {
+        background: 0 0;
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+        padding: 5px 9px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: .78rem
+      }
+
+      .sort-btn:hover {
+        color: #fff;
+        border-color: var(--poe-gold)
+      }
+
+      .sort-btn.active {
+        color: #fff;
+        background: rgba(175, 144, 71, .2);
+        border-color: var(--poe-gold)
+      }
+
+      .mod-select-list {
+        max-height: 390px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background: var(--bg-sub)
+      }
+
+      .mod-option-item {
+        padding: 9px 12px;
+        font-size: .84rem;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255, 255, 255, .05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        transition: background .15s
+      }
+
+      .mod-option-item:hover {
+        background: rgba(175, 144, 71, .15)
+      }
+
+      .mod-option-name {
+        flex: 1
+      }
+
+      .mod-tags {
+        display: flex;
+        gap: 7px;
+        font-size: .72rem;
+        white-space: nowrap
+      }
+
+      .badge-quant {
+        color: var(--poe-quant)
+      }
+
+      .badge-rarity {
+        color: var(--poe-rarity)
+      }
+
+      .badge-pack {
+        color: var(--poe-pack)
+      }
+
+      .badge-tier {
+        color: #ff9800;
+        font-weight: 700
+      }
+
+      .active-mods-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 60px
+      }
+
+      .active-mod-card {
+        background: var(--bg-sub);
+        border: 1px solid var(--border-color);
+        border-left: 3px solid var(--poe-gold);
+        padding: 10px 12px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px
+      }
+
+      .active-mod-info {
+        flex-grow: 1
+      }
+
+      .active-mod-name {
+        font-size: .9rem;
+        color: #fff;
+        margin-bottom: 3px
+      }
+
+      .active-mod-stats {
+        font-size: .78rem;
+        color: var(--text-muted);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap
+      }
+
+      .btn-remove-mod {
+        background: 0 0;
+        border: 1px solid rgba(231, 76, 60, .4);
+        color: #ff7666;
+        padding: 4px 8px;
+        font-size: .75rem;
+        border-radius: 3px;
+        cursor: pointer;
+        flex-shrink: 0
+      }
+
+      .btn-remove-mod:hover {
+        background: var(--danger);
+        color: #fff;
+        border-color: var(--danger)
+      }
+
+      .empty-state {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 20px;
+        font-style: italic;
+        font-size: .85rem
+      }
+
+      .mod-limit {
+        font-size: .8rem;
+        color: var(--text-muted)
+      }
+
+      .mod-limit.limit-reached {
+        color: #ff7666;
+        font-weight: 700
+      }
+
+      .custom-mod-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto;
+        gap: 6px;
+        align-items: center;
+        margin-top: 10px
+      }
+
+      @media (max-width:650px) {
+        .custom-mod-grid {
+          grid-template-columns: 1fr 1fr
+        }
+      }
+
+      .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px
+      }
+
+      .stat-box {
+        background: var(--bg-sub);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px 10px;
+        text-align: center
+      }
+
+      .stat-label {
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--text-muted);
+        margin-bottom: 4px
+      }
+
+      .stat-value {
+        font-size: 1.6rem;
+        font-weight: 700
+      }
+
+      .stat-quant .stat-value {
+        color: var(--poe-quant)
+      }
+
+      .stat-rarity .stat-value {
+        color: var(--poe-rarity)
+      }
+
+      .stat-pack .stat-value {
+        color: var(--poe-pack)
+      }
+
+      .calc-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .82rem;
+        margin-top: 12px
+      }
+
+      .calc-table td,
+      .calc-table th {
+        padding: 6px 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color)
+      }
+
+      .calc-table th {
+        color: var(--text-muted);
+        font-weight: 500
+      }
+
+      .calc-table tr:last-child td {
+        border-bottom: none;
+        font-weight: 700
+      }
+
+      .text-right {
+        text-align: right !important
+      }
+
+      .preset-active {
+        border-color: var(--poe-gold);
+        background: rgba(175, 144, 71, .18)
+      }
+
+      @media (max-width:600px) {
+        .stats-summary {
+          grid-template-columns: 1fr
+        }
+
+        .active-mod-card {
+          align-items: flex-start
+        }
+
+        .mod-option-item {
+          align-items: flex-start;
+          flex-direction: column
+        }
+      }
+    </style>
+    <div class=container>
+      <header>
+        <nav><a href=index.html>Home</a><a href=kingsmarch-calculator.html>Kingsmarch Calculator </a><a href=map-calculator.html>Map Calculator</a></nav>
+        <h1>PoE 1 Map Modifier Calculator</h1>
+        <p>Simulate Item Quantity, Item Rarity, and Monster Pack Size with Atlas Passives & Map Scaling
+      </header>
+      <div class=preset-bar><span class=preset-label>Presets: </span><button class=btn onclick='applyPreset("safe")' id=presetSafe>Max (Safe)</button><button class=btn onclick='applyPreset("max")' id=presetMax>Max</button><button class=btn onclick='applyPreset("t16")' id=presetT16>T16 Max</button><button class=btn onclick='applyPreset("t17")' id=presetT17>T17 Max</button><button class="btn btn-danger" onclick=clearAllModifiers()>Reset All</button></div>
+      <div class=card style=margin-bottom:20px>
+        <div class=card-title><span>Import / Export </span><span style=font-size:.8rem;font-weight:400;color:var(--text-muted)>Save or load calculator setups</span></div>
+        <div class=import-export-actions><button class=btn onclick=downloadSetup()>Download Setup</button><button class=btn onclick='document.getElementById("setupFile").click()'>Upload Setup</button><input id=setupFile type=file onchange=uploadSetup(event) accept=.json,application/json style=display:none><span class=import-status id=importStatus></span></div>
+      </div>
+      <div class=grid>
+        <div>
+          <div class=card style=margin-bottom:20px>
+            <div class=card-title><span>Atlas Passives & Base Quality</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class=control-group><label for=explicitEffect>Increased Effect of Explicit Modifiers (%)</label><input id=explicitEffect type=number max=200 min=0 oninput=calculate() step=1 value=0><small style=color:var(--text-muted);font-size:.75rem>From Atlas Tree wheel nodes</small></div>
+              <div class=control-group><label for=mapQuality>Map Quality (%) [Chisels]</label><input id=mapQuality type=number max=20 min=0 oninput=calculate() step=1 value=0></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px">
+              <div class=control-group><label for=atlasFlatQuant>Atlas Flat Item Quantity (%)</label><input id=atlasFlatQuant type=number max=100 min=0 oninput=calculate() step=1 value=0></div>
+              <div class=control-group><label for=atlasFlatRarity>Atlas Flat Item Rarity (%)</label><input id=atlasFlatRarity type=number max=100 min=0 oninput=calculate() step=1 value=0></div>
+            </div>
+            <div class=checkbox-row><label class=checkbox-label><input id=unidMap type=checkbox onchange=calculate()><span>Unidentified Map Bonus (+30% Quant)</span></label><label class=checkbox-label><input id=mapDeviceCraft type=checkbox onchange=calculate()><span>Map Device Craft / Infused (+8% Quant)</span></label></div>
+          </div>
+          <div class=card>
+            <div class=card-title><span>Add Map Modifiers </span><span class=mod-limit id=modLimitDisplay>0 / 8 explicit modifiers</span></div>
+            <div class=mod-picker-section><input id=modSearch placeholder="Search modifiers..." class=mod-search oninput=filterModList()>
+              <div class=sort-bar><span class=sort-label>Sort by: </span><button class="sort-btn active" onclick='setSort("default")' id=sortDefault>Default</button><button class=sort-btn onclick='setSort("quant")' id=sortQuant>Quantity ↓</button><button class=sort-btn onclick='setSort("rarity")' id=sortRarity>Rarity ↓</button><button class=sort-btn onclick='setSort("pack")' id=sortPack>Pack Size ↓</button></div>
+              <div class=mod-select-list id=modListContainer></div>
+            </div>
+            <div style="border-top:1px solid var(--border-color);padding-top:12px;margin-top:14px"><span style=font-size:.85rem;font-weight:600;color:var(--text-muted)>Add Custom Explicit Modifier:</span>
+              <div class=custom-mod-grid><input id=customName placeholder="Modifier text"><input id=customQuant type=number placeholder="+Quant %"><input id=customRarity type=number placeholder="+Rarity %"><input id=customPack type=number placeholder="+Pack %"><button class=btn onclick=addCustomMod() style=height:38px>Add</button></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class=card style=margin-bottom:20px>
+            <div class=card-title><span>Simulated Map Output </span><span style=font-size:.8rem;color:var(--poe-gold)>Live Calculation</span></div>
+            <div class=stats-summary>
+              <div class="stat-box stat-quant">
+                <div class=stat-label>Item Quantity</div>
+                <div class=stat-value id=totalQuant>0%</div>
+              </div>
+              <div class="stat-box stat-rarity">
+                <div class=stat-label>Item Rarity</div>
+                <div class=stat-value id=totalRarity>0%</div>
+              </div>
+              <div class="stat-box stat-pack">
+                <div class=stat-label>Monster Pack Size</div>
+                <div class=stat-value id=totalPack>0%</div>
+              </div>
+            </div>
+            <table class=calc-table>
+              <thead>
+                <tr>
+                  <th>Source Component
+                  <th class=text-right>Quantity
+                  <th class=text-right>Rarity
+                  <th class=text-right>Pack Size
+              <tbody>
+                <tr>
+                  <td>Base Explicit Mods (Sum)
+                  <td class=text-right id=baseQuantSum>0%
+                  <td class=text-right id=baseRaritySum>0%
+                  <td class=text-right id=basePackSum>0%
+                <tr>
+                  <td>Explicit Mod Effect (<span id=explicitEffectDisplay>+0%</span>)
+                  <td class=text-right id=scaledExplicitQuant>+0%
+                  <td class=text-right id=scaledExplicitRarity>+0%
+                  <td class=text-right id=scaledExplicitPack>+0%
+                <tr>
+                  <td>Map Quality
+                  <td class=text-right id=qualityQuantDisplay>+0%
+                  <td class=text-right>-
+                  <td class=text-right>-
+                <tr>
+                  <td>Atlas Flat & Device Bonuses
+                  <td class=text-right id=flatBonusesQuantDisplay>+0%
+                  <td class=text-right id=flatBonusesRarityDisplay>+0%
+                  <td class=text-right>-
+                <tr style=color:var(--poe-gold)>
+                  <td>Final Map Properties
+                  <td class=text-right id=finalQuantSummary>0%
+                  <td class=text-right id=finalRaritySummary>0%
+                  <td class=text-right id=finalPackSummary>0%
+            </table>
+          </div>
+          <div class=card>
+            <div class=card-title><span>Active Modifiers Breakdown </span><span id=activeModCount style=font-size:.8rem;color:var(--text-muted)>0 active mods</span></div>
+            <div class=active-mods-list id=activeModsContainer>
+              <div class=empty-state>No modifiers selected yet. Select modifiers from the list or choose a preset.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const MOD_DATABASE = [{
+        id: "extra_cold",
+        name: "Monsters deal (50-70)% extra physical damage as cold",
+        quant: 16,
+        rarity: 9,
+        pack: 6,
+        tier: "High Threat"
+      }, {
+        id: "extra_lightning",
+        name: "Monsters deal (50-70)% extra physical damage as lightning",
+        quant: 16,
+        rarity: 9,
+        pack: 6,
+        tier: "High Threat"
+      }, {
+        id: "extra_chaos",
+        name: "Monsters gain (25-35)% of Physical as Extra Chaos",
+        quant: 16,
+        rarity: 9,
+        pack: 6,
+        tier: "High Threat"
+      }, {
+        id: "minus_max_res",
+        name: "-(9-12)% maximum Player Resistances",
+        quant: 18,
+        rarity: 10,
+        pack: 7,
+        tier: "Very High"
+      }, {
+        id: "no_regen",
+        name: "Players cannot Regenerate Life, Mana or Energy Shield",
+        quant: 16,
+        rarity: 9,
+        pack: 6,
+        tier: "High Threat"
+      }, {
+        id: "less_recovery",
+        name: "60% less Recovery Rate of Life and Energy Shield",
+        quant: 15,
+        rarity: 8,
+        pack: 5,
+        tier: "High Threat"
+      }, {
+        id: "ele_reflect",
+        name: "Monsters reflect 18% of Elemental Damage",
+        quant: 13,
+        rarity: 7,
+        pack: 5,
+        tier: "Dangerous"
+      }, {
+        id: "phys_reflect",
+        name: "Monsters reflect 18% of Physical Damage",
+        quant: 13,
+        rarity: 7,
+        pack: 5,
+        tier: "Dangerous"
+      }, {
+        id: "extra_proj",
+        name: "Monsters fire 2 additional Projectiles",
+        quant: 15,
+        rarity: 8,
+        pack: 5,
+        tier: "High Threat"
+      }, {
+        id: "crit_multi",
+        name: "Monsters have +(300-400)% to Critical Strike Multiplier",
+        quant: 14,
+        rarity: 8,
+        pack: 5,
+        tier: "Dangerous"
+      }, {
+        id: "ele_weakness",
+        name: "Players are Cursed with Elemental Weakness",
+        quant: 12,
+        rarity: 7,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "vuln_curse",
+        name: "Players are Cursed with Vulnerability",
+        quant: 12,
+        rarity: 7,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "temp_chains",
+        name: "Players are Cursed with Temporal Chains",
+        quant: 12,
+        rarity: 7,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "turbo",
+        name: "Monsters have (30-40)% increased Attack/Cast/Move Speed",
+        quant: 14,
+        rarity: 8,
+        pack: 5,
+        tier: "Dangerous"
+      }, {
+        id: "monster_life",
+        name: "Monsters have (40-50)% more Maximum Life",
+        quant: 11,
+        rarity: 6,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "cannot_leech",
+        name: "Cannot Leech Life from Monsters",
+        quant: 14,
+        rarity: 8,
+        pack: 5,
+        tier: "Dangerous"
+      }, {
+        id: "desecrated_ground",
+        name: "Area has patches of Desecrated Ground",
+        quant: 10,
+        rarity: 6,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "burning_ground",
+        name: "Area has patches of Burning Ground",
+        quant: 10,
+        rarity: 6,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "shattered_ground",
+        name: "Area has patches of Chilled Ground",
+        quant: 10,
+        rarity: 6,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "shocking_ground",
+        name: "Area has patches of Shocked Ground",
+        quant: 10,
+        rarity: 6,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "avoid_ailments",
+        name: "Monsters have 70% chance to Avoid Elemental Ailments",
+        quant: 11,
+        rarity: 6,
+        pack: 4,
+        tier: "Standard"
+      }, {
+        id: "t17_union_souls",
+        name: "[T17] Monsters gain Union of Souls on Death",
+        quant: 24,
+        rarity: 15,
+        pack: 10,
+        tier: "T17 Exclusive"
+      }, {
+        id: "t17_meteors",
+        name: "[T17] Players are targeted by a Meteor on skill use",
+        quant: 25,
+        rarity: 16,
+        pack: 10,
+        tier: "T17 Exclusive"
+      }, {
+        id: "t17_drowning",
+        name: "[T17] Area contains Drowning Orbs",
+        quant: 25,
+        rarity: 16,
+        pack: 10,
+        tier: "T17 Exclusive"
+      }, {
+        id: "t17_petrification",
+        name: "[T17] Monsters inflict Petrification on Hit",
+        quant: 22,
+        rarity: 14,
+        pack: 9,
+        tier: "T17 Exclusive"
+      }, {
+        id: "t17_sawblades",
+        name: "[T17] Area contains spinning Sawblades",
+        quant: 23,
+        rarity: 15,
+        pack: 9,
+        tier: "T17 Exclusive"
+      }];
+      let activeMods = [],
+        customModCounter = 1,
+        currentSort = "default";
+      const MAX_EXPLICIT_MODS = 8;
+
+      function setSort(e) {
+        currentSort = e, document.querySelectorAll(".sort-btn").forEach(e => {
+          e.classList.remove("active")
+        }), "default" === e && document.getElementById("sortDefault").classList.add("active"), "quant" === e && document.getElementById("sortQuant").classList.add("active"), "rarity" === e && document.getElementById("sortRarity").classList.add("active"), "pack" === e && document.getElementById("sortPack").classList.add("active"), filterModList()
+      }
+
+      function renderModSelector(a = "") {
+        const n = document.getElementById("modListContainer");
+        n.innerHTML = "";
+        let e = MOD_DATABASE.filter(e => {
+          var t = a.toLowerCase();
+          return e.name.toLowerCase().includes(t) || e.tier.toLowerCase().includes(t)
         });
+        e = e.filter(t => !activeMods.some(e => e.id === t.id)), "quant" === currentSort ? e.sort((e, t) => t.quant - e.quant) : "rarity" === currentSort ? e.sort((e, t) => t.rarity - e.rarity) : "pack" === currentSort && e.sort((e, t) => t.pack - e.pack), 0 !== e.length ? e.forEach(e => {
+          const t = document.createElement("div");
+          t.className = "mod-option-item", t.onclick = () => {
+            activeMods.length >= MAX_EXPLICIT_MODS ? showStatus("Maximum of 8 explicit modifiers reached.", "#ff7666") : toggleMod(e)
+          }, t.innerHTML = `
 
-    if (sortType === 'default') {
-        document
-            .getElementById('sortDefault')
-            .classList.add('active');
-    }
-
-    if (sortType === 'quant') {
-        document
-            .getElementById('sortQuant')
-            .classList.add('active');
-    }
-
-    if (sortType === 'rarity') {
-        document
-            .getElementById('sortRarity')
-            .classList.add('active');
-    }
-
-    if (sortType === 'pack') {
-        document
-            .getElementById('sortPack')
-            .classList.add('active');
-    }
-
-    filterModList();
-}
-
-
-/* ============================================================
-   MODIFIER SELECTOR
-============================================================ */
-
-function renderModSelector(filterText = '') {
-
-    const container =
-        document.getElementById('modListContainer');
-
-    container.innerHTML = '';
-
-    let filtered = MOD_DATABASE.filter(mod => {
-
-        const search =
-            filterText.toLowerCase();
-
-        return (
-            mod.name.toLowerCase().includes(search) ||
-            mod.tier.toLowerCase().includes(search)
-        );
-
-    });
-
-
-    /*
-       IMPORTANT:
-       Selected database modifiers are hidden from
-       the left selector.
-    */
-
-    filtered = filtered.filter(mod =>
-        !activeMods.some(active => active.id === mod.id)
-    );
-
-
-    if (currentSort === 'quant') {
-
-        filtered.sort(
-            (a, b) => b.quant - a.quant
-        );
-
-    }
-
-    else if (currentSort === 'rarity') {
-
-        filtered.sort(
-            (a, b) => b.rarity - a.rarity
-        );
-
-    }
-
-    else if (currentSort === 'pack') {
-
-        filtered.sort(
-            (a, b) => b.pack - a.pack
-        );
-
-    }
-
-
-    if (filtered.length === 0) {
-
-        container.innerHTML =
-            '<div style="padding:14px;color:var(--text-muted);font-size:0.85rem;">' +
-            'No available modifiers found.' +
-            '</div>';
-
-        return;
-    }
-
-
-    filtered.forEach(mod => {
-
-        const item =
-            document.createElement('div');
-
-        item.className =
-            'mod-option-item';
-
-
-        item.onclick = () => {
-
-            if (
-                activeMods.length >=
-                MAX_EXPLICIT_MODS
-            ) {
-
-                showStatus(
-                    'Maximum of 8 explicit modifiers reached.',
-                    '#ff7666'
-                );
-
-                return;
-            }
-
-            toggleMod(mod);
-
-        };
-
-
-        item.innerHTML = `
-
-            <div class="mod-option-name">
-
-                <span style="font-weight:500;">
-                    ${escapeHtml(mod.name)}
-                </span>
-
-                <span
+            <div class="mod-option-name"><span style="font-weight:500;">
+                    ${escapeHtml(e.name)}
+                </span><span
                     class="badge-tier"
                     style="margin-left:6px;font-size:0.7rem;"
                 >
-                    [${escapeHtml(mod.tier)}]
-                </span>
+                    [${escapeHtml(e.tier)}]
+                </span></div><div class="mod-tags"><span class="badge-quant">
+                    +${e.quant}% Q
+                </span><span class="badge-rarity">
+                    +${e.rarity}% R
+                </span><span class="badge-pack">
+                    +${e.pack}% P
+                </span></div>
+        `, n.appendChild(t)
+        }) : n.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:0.85rem;">No available modifiers found.</div>'
+      }
 
-            </div>
+      function filterModList() {
+        renderModSelector(document.getElementById("modSearch").value)
+      }
 
-            <div class="mod-tags">
-
-                <span class="badge-quant">
-                    +${mod.quant}% Q
-                </span>
-
-                <span class="badge-rarity">
-                    +${mod.rarity}% R
-                </span>
-
-                <span class="badge-pack">
-                    +${mod.pack}% P
-                </span>
-
-            </div>
-        `;
-
-        container.appendChild(item);
-
-    });
-
-}
-
-
-function filterModList() {
-
-    const text =
-        document.getElementById('modSearch').value;
-
-    renderModSelector(text);
-
-}
-
-
-/* ============================================================
-   TOGGLE MOD
-============================================================ */
-
-function toggleMod(mod) {
-
-    const index =
-        activeMods.findIndex(
-            m => m.id === mod.id
-        );
-
-
-    if (index > -1) {
-
-        activeMods.splice(index, 1);
-
-    }
-
-    else {
-
-        if (
-            activeMods.length >=
-            MAX_EXPLICIT_MODS
-        ) {
-
-            showStatus(
-                'Maximum of 8 explicit modifiers reached.',
-                '#ff7666'
-            );
-
-            return;
+      function toggleMod(t) {
+        var e = activeMods.findIndex(e => e.id === t.id);
+        if (-1 < e) activeMods.splice(e, 1);
+        else {
+          if (activeMods.length >= MAX_EXPLICIT_MODS) return void showStatus("Maximum of 8 explicit modifiers reached.", "#ff7666");
+          activeMods.push({
+            ...t
+          })
         }
-
-        activeMods.push({
-            ...mod
-        });
-
-    }
-
-
-    clearStatus();
-
-    updateUI();
-
-}
-
-
-/* ============================================================
-   REMOVE MOD
-============================================================ */
-
-function removeMod(id) {
-
-    const index =
-        activeMods.findIndex(
-            m => m.id === id
-        );
-
-
-    if (index > -1) {
-
-        activeMods.splice(index, 1);
-
-        updateUI();
-
-    }
-
-}
-
-
-/* ============================================================
-   CLEAR
-============================================================ */
-
-function clearAllModifiers() {
-
-    activeMods = [];
-
-    clearPresetHighlight();
-
-    updateUI();
-
-}
-
-
-/* ============================================================
-   CUSTOM MODIFIER
-============================================================ */
-
-function addCustomMod() {
-
-    if (
-        activeMods.length >=
-        MAX_EXPLICIT_MODS
-    ) {
-
-        showStatus(
-            'Maximum of 8 explicit modifiers reached.',
-            '#ff7666'
-        );
-
-        return;
-    }
-
-
-    const name =
-        document
-            .getElementById('customName')
-            .value
-            .trim() ||
-        'Custom Explicit Modifier';
-
-
-    const quant =
-        parseFloat(
-            document
-                .getElementById('customQuant')
-                .value
-        ) || 0;
-
-
-    const rarity =
-        parseFloat(
-            document
-                .getElementById('customRarity')
-                .value
-        ) || 0;
-
-
-    const pack =
-        parseFloat(
-            document
-                .getElementById('customPack')
-                .value
-        ) || 0;
-
-
-    const newMod = {
-
-        id:
-            'custom_' +
-            customModCounter++,
-
-        name,
-
-        quant,
-
-        rarity,
-
-        pack,
-
-        tier: 'Custom',
-
-        isCustom: true
-
-    };
-
-
-    activeMods.push(newMod);
-
-
-    document.getElementById('customName').value = '';
-
-    document.getElementById('customQuant').value = '';
-
-    document.getElementById('customRarity').value = '';
-
-    document.getElementById('customPack').value = '';
-
-
-    updateUI();
-
-}
-
-
-/* ============================================================
-   PRESETS
-============================================================ */
-
-function applyPreset(type) {
-
-    activeMods = [];
-
-
-    /*
-       MAX (SAFE)
-
-       User-provided 8 modifier setup.
-    */
-
-    if (type === 'safe') {
-
-        const ids = [
-
-            'minus_max_res',
-
-            'extra_cold',
-
-            'extra_lightning',
-
-            'extra_chaos',
-
-            'extra_proj',
-
-            'crit_multi',
-
-            'turbo',
-
-            'cannot_leech'
-
-        ];
-
-
-        ids.forEach(id => {
-
-            const found =
-                MOD_DATABASE.find(
-                    m => m.id === id
-                );
-
-            if (found) {
-
-                activeMods.push({
-                    ...found
-                });
-
-            }
-
-        });
-
-    }
-
-
-    /*
-       MAX
-
-       Highest overall general modifier
-       combination from the database.
-
-       This deliberately differs from Max (Safe).
-    */
-
-    else if (type === 'max') {
-
-        const ids = [
-
-            't17_meteors',
-
-            't17_drowning',
-
-            't17_union_souls',
-
-            't17_petrification',
-
-            't17_sawblades',
-
-            'minus_max_res',
-
-            'extra_cold',
-
-            'extra_lightning'
-
-        ];
-
-
-        ids.forEach(id => {
-
-            const found =
-                MOD_DATABASE.find(
-                    m => m.id === id
-                );
-
-            if (found) {
-
-                activeMods.push({
-                    ...found
-                });
-
-            }
-
-        });
-
-    }
-
-
-    /*
-       T16 MAX
-
-       Eight strong standard T16 modifiers.
-       No T17-specific modifiers.
-    */
-
-    else if (type === 't16') {
-
-        const ids = [
-
-            'minus_max_res',
-
-            'extra_cold',
-
-            'extra_lightning',
-
-            'extra_chaos',
-
-            'extra_proj',
-
-            'crit_multi',
-
-            'turbo',
-
-            'cannot_leech'
-
-        ];
-
-
-        ids.forEach(id => {
-
-            const found =
-                MOD_DATABASE.find(
-                    m => m.id === id
-                );
-
-            if (found) {
-
-                activeMods.push({
-                    ...found
-                });
-
-            }
-
-        });
-
-
-        document.getElementById(
-            'mapQuality'
-        ).value = 20;
-
-    }
-
-
-    /*
-       T17 MAX
-    */
-
-    else if (type === 't17') {
-
-        const ids = [
-
-            't17_union_souls',
-
-            't17_meteors',
-
-            't17_drowning',
-
-            't17_petrification',
-
-            't17_sawblades',
-
-            'minus_max_res',
-
-            'extra_cold',
-
-            'less_recovery'
-
-        ];
-
-
-        ids.forEach(id => {
-
-            const found =
-                MOD_DATABASE.find(
-                    m => m.id === id
-                );
-
-            if (found) {
-
-                activeMods.push({
-                    ...found
-                });
-
-            }
-
-        });
-
-
-        document.getElementById(
-            'mapQuality'
-        ).value = 20;
-
-    }
-
-
-    clearStatus();
-
-    highlightPreset(type);
-
-    updateUI();
-
-}
-
-
-/* ============================================================
-   PRESET HIGHLIGHT
-============================================================ */
-
-function clearPresetHighlight() {
-
-    document
-        .querySelectorAll('.preset-bar .btn')
-        .forEach(btn => {
-
-            btn.classList.remove(
-                'preset-active'
-            );
-
-        });
-
-}
-
-
-function highlightPreset(type) {
-
-    clearPresetHighlight();
-
-    const map = {
-
-        safe: 'presetSafe',
-
-        max: 'presetMax',
-
-        t16: 'presetT16',
-
-        t17: 'presetT17'
-
-    };
-
-
-    const element =
-        document.getElementById(
-            map[type]
-        );
-
-
-    if (element) {
-
-        element.classList.add(
-            'preset-active'
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   ACTIVE MODIFIER DISPLAY
-============================================================ */
-
-function renderActiveMods() {
-
-    const container =
-        document.getElementById(
-            'activeModsContainer'
-        );
-
-
-    const countDisplay =
-        document.getElementById(
-            'activeModCount'
-        );
-
-
-    countDisplay.innerText =
-        `${activeMods.length} active mod${
-            activeMods.length === 1
-                ? ''
-                : 's'
-        }`;
-
-
-    const limitDisplay =
-        document.getElementById(
-            'modLimitDisplay'
-        );
-
-
-    limitDisplay.innerText =
-        `${activeMods.length} / ${MAX_EXPLICIT_MODS} explicit modifiers`;
-
-
-    if (
-        activeMods.length >=
-        MAX_EXPLICIT_MODS
-    ) {
-
-        limitDisplay.classList.add(
-            'limit-reached'
-        );
-
-    }
-
-    else {
-
-        limitDisplay.classList.remove(
-            'limit-reached'
-        );
-
-    }
-
-
-    if (activeMods.length === 0) {
-
-        container.innerHTML =
-            '<div class="empty-state">' +
-            'No modifiers selected yet. Select modifiers from the list or choose a preset.' +
-            '</div>';
-
-        return;
-
-    }
-
-
-    container.innerHTML = '';
-
-
-    activeMods.forEach((mod, index) => {
-
-        const card =
-            document.createElement('div');
-
-
-        card.className =
-            'active-mod-card';
-
-
-        card.innerHTML = `
-
-            <div class="active-mod-info">
-
-                <div class="active-mod-name">
-
-                    ${index + 1}.
-                    ${escapeHtml(mod.name)}
-
-                </div>
-
-                <div class="active-mod-stats">
-
-                    <span class="badge-quant">
-                        Quant: +${mod.quant}%
-                    </span>
-
-                    <span class="badge-rarity">
-                        Rarity: +${mod.rarity}%
-                    </span>
-
-                    <span class="badge-pack">
-                        Pack Size: +${mod.pack}%
-                    </span>
-
-                </div>
-
-            </div>
-
-            <button
+        clearStatus(), updateUI()
+      }
+
+      function removeMod(t) {
+        var e = activeMods.findIndex(e => e.id === t); - 1 < e && (activeMods.splice(e, 1), updateUI())
+      }
+
+      function clearAllModifiers() {
+        activeMods = [], clearPresetHighlight(), updateUI()
+      }
+
+      function addCustomMod() {
+        var e, t, a, n;
+        activeMods.length >= MAX_EXPLICIT_MODS ? showStatus("Maximum of 8 explicit modifiers reached.", "#ff7666") : (e = document.getElementById("customName").value.trim() || "Custom Explicit Modifier", t = parseFloat(document.getElementById("customQuant").value) || 0, a = parseFloat(document.getElementById("customRarity").value) || 0, n = parseFloat(document.getElementById("customPack").value) || 0, n = {
+          id: "custom_" + customModCounter++,
+          name: e,
+          quant: t,
+          rarity: a,
+          pack: n,
+          tier: "Custom",
+          isCustom: !0
+        }, activeMods.push(n), document.getElementById("customName").value = "", document.getElementById("customQuant").value = "", document.getElementById("customRarity").value = "", document.getElementById("customPack").value = "", updateUI())
+      }
+
+      function applyPreset(e) {
+        if (activeMods = [], "safe" === e) {
+          const t = ["minus_max_res", "extra_cold", "extra_lightning", "extra_chaos", "extra_proj", "crit_multi", "turbo", "cannot_leech"];
+          t.forEach(t => {
+            var e = MOD_DATABASE.find(e => e.id === t);
+            e && activeMods.push({
+              ...e
+            })
+          })
+        } else if ("max" === e) {
+          const a = ["t17_meteors", "t17_drowning", "t17_union_souls", "t17_petrification", "t17_sawblades", "minus_max_res", "extra_cold", "extra_lightning"];
+          a.forEach(t => {
+            var e = MOD_DATABASE.find(e => e.id === t);
+            e && activeMods.push({
+              ...e
+            })
+          })
+        } else if ("t16" === e) {
+          const n = ["minus_max_res", "extra_cold", "extra_lightning", "extra_chaos", "extra_proj", "crit_multi", "turbo", "cannot_leech"];
+          n.forEach(t => {
+            var e = MOD_DATABASE.find(e => e.id === t);
+            e && activeMods.push({
+              ...e
+            })
+          }), document.getElementById("mapQuality").value = 20
+        } else if ("t17" === e) {
+          const i = ["t17_union_souls", "t17_meteors", "t17_drowning", "t17_petrification", "t17_sawblades", "minus_max_res", "extra_cold", "less_recovery"];
+          i.forEach(t => {
+            var e = MOD_DATABASE.find(e => e.id === t);
+            e && activeMods.push({
+              ...e
+            })
+          }), document.getElementById("mapQuality").value = 20
+        }
+        clearStatus(), highlightPreset(e), updateUI()
+      }
+
+      function clearPresetHighlight() {
+        document.querySelectorAll(".preset-bar .btn").forEach(e => {
+          e.classList.remove("preset-active")
+        })
+      }
+
+      function highlightPreset(e) {
+        clearPresetHighlight();
+        const t = document.getElementById({
+          safe: "presetSafe",
+          max: "presetMax",
+          t16: "presetT16",
+          t17: "presetT17"
+        } [e]);
+        t && t.classList.add("preset-active")
+      }
+
+      function renderActiveMods() {
+        const n = document.getElementById("activeModsContainer"),
+          e = document.getElementById("activeModCount");
+        e.innerText = `${activeMods.length} active mod${1===activeMods.length?"":"s"}`;
+        const t = document.getElementById("modLimitDisplay");
+        t.innerText = `${activeMods.length} / ${MAX_EXPLICIT_MODS} explicit modifiers`, activeMods.length >= MAX_EXPLICIT_MODS ? t.classList.add("limit-reached") : t.classList.remove("limit-reached"), 0 !== activeMods.length ? (n.innerHTML = "", activeMods.forEach((e, t) => {
+          const a = document.createElement("div");
+          a.className = "active-mod-card", a.innerHTML = `
+
+            <div class="active-mod-info"><div class="active-mod-name">
+
+                    ${t+1}.
+                    ${escapeHtml(e.name)}
+
+                </div><div class="active-mod-stats"><span class="badge-quant">
+                        Quant: +${e.quant}%
+                    </span><span class="badge-rarity">
+                        Rarity: +${e.rarity}%
+                    </span><span class="badge-pack">
+                        Pack Size: +${e.pack}%
+                    </span></div></div><button
                 class="btn-remove-mod"
                 title="Remove modifier"
-                onclick="removeMod('${escapeHtml(mod.id)}')"
+                onclick="removeMod('${escapeHtml(e.id)}')"
             >
                 ✕ Remove
             </button>
 
-        `;
-
-
-        container.appendChild(card);
-
-    });
-
-}
-
-
-/* ============================================================
-   CALCULATIONS
-============================================================ */
-
-function calculate() {
-
-    const explicitEffect =
-        parseFloat(
-            document
-                .getElementById(
-                    'explicitEffect'
-                )
-                .value
-        ) || 0;
-
-
-    const mapQuality =
-        parseFloat(
-            document
-                .getElementById(
-                    'mapQuality'
-                )
-                .value
-        ) || 0;
-
-
-    const atlasFlatQuant =
-        parseFloat(
-            document
-                .getElementById(
-                    'atlasFlatQuant'
-                )
-                .value
-        ) || 0;
-
-
-    const atlasFlatRarity =
-        parseFloat(
-            document
-                .getElementById(
-                    'atlasFlatRarity'
-                )
-                .value
-        ) || 0;
-
-
-    const isUnid =
-        document
-            .getElementById(
-                'unidMap'
-            )
-            .checked;
-
-
-    const hasDeviceBonus =
-        document
-            .getElementById(
-                'mapDeviceCraft'
-            )
-            .checked;
-
-
-    let baseQuant = 0;
-
-    let baseRarity = 0;
-
-    let basePack = 0;
-
-
-    activeMods.forEach(mod => {
-
-        baseQuant +=
-            Number(mod.quant) || 0;
-
-        baseRarity +=
-            Number(mod.rarity) || 0;
-
-        basePack +=
-            Number(mod.pack) || 0;
-
-    });
-
-
-    const effectMultiplier =
-        explicitEffect / 100;
-
-
-    /*
-       PoE-style floor for explicit modifier
-       effect scaling.
-    */
-
-    const scaledQuantBonus =
-        Math.floor(
-            baseQuant *
-            effectMultiplier
-        );
-
-
-    const scaledRarityBonus =
-        Math.floor(
-            baseRarity *
-            effectMultiplier
-        );
-
-
-    const scaledPackBonus =
-        Math.floor(
-            basePack *
-            effectMultiplier
-        );
-
-
-    const totalExplicitQuant =
-        baseQuant +
-        scaledQuantBonus;
-
-
-    const totalExplicitRarity =
-        baseRarity +
-        scaledRarityBonus;
-
-
-    const totalExplicitPack =
-        basePack +
-        scaledPackBonus;
-
-
-    const flatQuantBonus =
-        atlasFlatQuant +
-        (isUnid ? 30 : 0) +
-        (hasDeviceBonus ? 8 : 0);
-
-
-    const flatRarityBonus =
-        atlasFlatRarity;
-
-
-    const finalQuant =
-        totalExplicitQuant +
-        mapQuality +
-        flatQuantBonus;
-
-
-    const finalRarity =
-        totalExplicitRarity +
-        flatRarityBonus;
-
-
-    const finalPack =
-        totalExplicitPack;
-
-
-    /* TOP STATS */
-
-    document.getElementById(
-        'totalQuant'
-    ).innerText =
-        `${finalQuant}%`;
-
-
-    document.getElementById(
-        'totalRarity'
-    ).innerText =
-        `${finalRarity}%`;
-
-
-    document.getElementById(
-        'totalPack'
-    ).innerText =
-        `${finalPack}%`;
-
-
-    /* BREAKDOWN */
-
-    document.getElementById(
-        'baseQuantSum'
-    ).innerText =
-        `${baseQuant}%`;
-
-
-    document.getElementById(
-        'baseRaritySum'
-    ).innerText =
-        `${baseRarity}%`;
-
-
-    document.getElementById(
-        'basePackSum'
-    ).innerText =
-        `${basePack}%`;
-
-
-    document.getElementById(
-        'explicitEffectDisplay'
-    ).innerText =
-        `+${explicitEffect}%`;
-
-
-    document.getElementById(
-        'scaledExplicitQuant'
-    ).innerText =
-        `+${scaledQuantBonus}%`;
-
-
-    document.getElementById(
-        'scaledExplicitRarity'
-    ).innerText =
-        `+${scaledRarityBonus}%`;
-
-
-    document.getElementById(
-        'scaledExplicitPack'
-    ).innerText =
-        `+${scaledPackBonus}%`;
-
-
-    document.getElementById(
-        'qualityQuantDisplay'
-    ).innerText =
-        `+${mapQuality}%`;
-
-
-    document.getElementById(
-        'flatBonusesQuantDisplay'
-    ).innerText =
-        `+${flatQuantBonus}%`;
-
-
-    document.getElementById(
-        'flatBonusesRarityDisplay'
-    ).innerText =
-        `+${flatRarityBonus}%`;
-
-
-    document.getElementById(
-        'finalQuantSummary'
-    ).innerText =
-        `${finalQuant}%`;
-
-
-    document.getElementById(
-        'finalRaritySummary'
-    ).innerText =
-        `${finalRarity}%`;
-
-
-    document.getElementById(
-        'finalPackSummary'
-    ).innerText =
-        `${finalPack}%`;
-
-}
-
-
-/* ============================================================
-   JSON STATE
-============================================================ */
-
-function getCalculatorState() {
-
-    const modifierData =
-        activeMods.map(mod => {
-
-            const databaseMod =
-                MOD_DATABASE.find(
-                    dbMod =>
-                        dbMod.id === mod.id
-                );
-
-
-            if (
-                databaseMod &&
-                !mod.isCustom
-            ) {
-
-                return {
-
-                    type: 'database',
-
-                    id: mod.id
-
-                };
-
-            }
-
-
-            return {
-
-                type: 'custom',
-
-                id: mod.id,
-
-                name: mod.name,
-
-                quant:
-                    Number(mod.quant) || 0,
-
-                rarity:
-                    Number(mod.rarity) || 0,
-
-                pack:
-                    Number(mod.pack) || 0,
-
-                tier:
-                    mod.tier || 'Custom'
-
-            };
-
+        `, n.appendChild(a)
+        })) : n.innerHTML = '<div class="empty-state">No modifiers selected yet. Select modifiers from the list or choose a preset.</div>'
+      }
+
+      function calculate() {
+        var e = parseFloat(document.getElementById("explicitEffect").value) || 0,
+          t = parseFloat(document.getElementById("mapQuality").value) || 0,
+          a = parseFloat(document.getElementById("atlasFlatQuant").value) || 0,
+          n = parseFloat(document.getElementById("atlasFlatRarity").value) || 0,
+          i = document.getElementById("unidMap").checked,
+          r = document.getElementById("mapDeviceCraft").checked;
+        let o = 0,
+          s = 0,
+          c = 0;
+        activeMods.forEach(e => {
+          o += Number(e.quant) || 0, s += Number(e.rarity) || 0, c += Number(e.pack) || 0
         });
-
-
-    return {
-
-        version: 2,
-
-        settings: {
-
-            explicitEffect:
-                parseFloat(
-                    document
-                        .getElementById(
-                            'explicitEffect'
-                        )
-                        .value
-                ) || 0,
-
-            mapQuality:
-                parseFloat(
-                    document
-                        .getElementById(
-                            'mapQuality'
-                        )
-                        .value
-                ) || 0,
-
-            atlasFlatQuant:
-                parseFloat(
-                    document
-                        .getElementById(
-                            'atlasFlatQuant'
-                        )
-                        .value
-                ) || 0,
-
-            atlasFlatRarity:
-                parseFloat(
-                    document
-                        .getElementById(
-                            'atlasFlatRarity'
-                        )
-                        .value
-                ) || 0,
-
-            unidMap:
-                document
-                    .getElementById(
-                        'unidMap'
-                    )
-                    .checked,
-
-            mapDeviceCraft:
-                document
-                    .getElementById(
-                        'mapDeviceCraft'
-                    )
-                    .checked
-
-        },
-
-        activeMods:
-            modifierData
-
-    };
-
-}
-
-
-/* ============================================================
-   DOWNLOAD JSON
-============================================================ */
-
-function downloadSetup() {
-
-    const state =
-        getCalculatorState();
-
-
-    const json =
-        JSON.stringify(
-            state,
-            null,
-            2
-        );
-
-
-    const blob =
-        new Blob(
-            [json],
-            {
-                type:
-                    'application/json'
-            }
-        );
-
-
-    const url =
-        URL.createObjectURL(blob);
-
-
-    const link =
-        document.createElement('a');
-
-
-    link.href = url;
-
-
-    const timestamp =
-        new Date()
-            .toISOString()
-            .replace(
-                /[:.]/g,
-                '-'
-            );
-
-
-    link.download =
-        `poe-map-calculator-${timestamp}.json`;
-
-
-    document.body.appendChild(link);
-
-
-    link.click();
-
-
-    link.remove();
-
-
-    URL.revokeObjectURL(url);
-
-
-    showImportStatus(
-        'Setup downloaded successfully.',
-        '#50e3c2'
-    );
-
-}
-
-
-/* ============================================================
-   UPLOAD JSON
-============================================================ */
-
-function uploadSetup(event) {
-
-    const file =
-        event.target.files[0];
-
-
-    if (!file) {
-        return;
-    }
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload = function(e) {
-
-        try {
-
-            const state =
-                JSON.parse(
-                    e.target.result
-                );
-
-
-            importState(state);
-
-
-            showImportStatus(
-                'Setup uploaded successfully.',
-                '#50e3c2'
-            );
-
-        }
-
-        catch(error) {
-
-            console.error(
-                'Import error:',
-                error
-            );
-
-
-            showImportStatus(
-                'Invalid calculator JSON file.',
-                '#e74c3c'
-            );
-
-        }
-
-
-        /*
-           Reset input so the same file can
-           be uploaded again later.
-        */
-
-        event.target.value = '';
-
-    };
-
-
-    reader.onerror = function() {
-
-        showImportStatus(
-            'Could not read the setup file.',
-            '#e74c3c'
-        );
-
-    };
-
-
-    reader.readAsText(file);
-
-}
-
-
-/* ============================================================
-   IMPORT STATE
-============================================================ */
-
-function importState(state) {
-
-    if (
-        !state ||
-        typeof state !== 'object'
-    ) {
-
-        throw new Error(
-            'Invalid state'
-        );
-
-    }
-
-
-    if (
-        !state.settings ||
-        !Array.isArray(
-            state.activeMods
-        )
-    ) {
-
-        throw new Error(
-            'Invalid calculator setup'
-        );
-
-    }
-
-
-    /* SETTINGS */
-
-    document.getElementById(
-        'explicitEffect'
-    ).value =
-        state.settings.explicitEffect ?? 32;
-
-
-    document.getElementById(
-        'mapQuality'
-    ).value =
-        state.settings.mapQuality ?? 0;
-
-
-    document.getElementById(
-        'atlasFlatQuant'
-    ).value =
-        state.settings.atlasFlatQuant ?? 15;
-
-
-    document.getElementById(
-        'atlasFlatRarity'
-    ).value =
-        state.settings.atlasFlatRarity ?? 14;
-
-
-    document.getElementById(
-        'unidMap'
-    ).checked =
-        Boolean(
-            state.settings.unidMap
-        );
-
-
-    document.getElementById(
-        'mapDeviceCraft'
-    ).checked =
-        Boolean(
-            state.settings.mapDeviceCraft
-        );
-
-
-    /* MODIFIERS */
-
-    activeMods = [];
-
-
-    state.activeMods
-        .slice(0, MAX_EXPLICIT_MODS)
-        .forEach(savedMod => {
-
-
-            if (
-                savedMod.type ===
-                    'database' &&
-                savedMod.id
-            ) {
-
-                const databaseMod =
-                    MOD_DATABASE.find(
-                        mod =>
-                            mod.id ===
-                            savedMod.id
-                    );
-
-
-                if (databaseMod) {
-
-                    activeMods.push({
-                        ...databaseMod
-                    });
-
-                }
-
-                return;
-
-            }
-
-
-            if (
-                savedMod.type ===
-                    'custom' &&
-                savedMod.id
-            ) {
-
-                activeMods.push({
-
-                    id:
-                        savedMod.id,
-
-                    name:
-                        savedMod.name ||
-                        'Custom Explicit Modifier',
-
-                    quant:
-                        Number(
-                            savedMod.quant
-                        ) || 0,
-
-                    rarity:
-                        Number(
-                            savedMod.rarity
-                        ) || 0,
-
-                    pack:
-                        Number(
-                            savedMod.pack
-                        ) || 0,
-
-                    tier:
-                        savedMod.tier ||
-                        'Custom',
-
-                    isCustom:
-                        true
-
-                });
-
-            }
-
+        var d = e / 100,
+          l = Math.floor(o * d),
+          u = Math.floor(s * d),
+          m = Math.floor(c * d),
+          d = a + (i ? 30 : 0) + (r ? 8 : 0),
+          a = n,
+          i = o + l + t + d,
+          r = s + u + a,
+          n = c + m;
+        document.getElementById("totalQuant").innerText = `${i}%`, document.getElementById("totalRarity").innerText = `${r}%`, document.getElementById("totalPack").innerText = `${n}%`, document.getElementById("baseQuantSum").innerText = `${o}%`, document.getElementById("baseRaritySum").innerText = `${s}%`, document.getElementById("basePackSum").innerText = `${c}%`, document.getElementById("explicitEffectDisplay").innerText = `+${e}%`, document.getElementById("scaledExplicitQuant").innerText = `+${l}%`, document.getElementById("scaledExplicitRarity").innerText = `+${u}%`, document.getElementById("scaledExplicitPack").innerText = `+${m}%`, document.getElementById("qualityQuantDisplay").innerText = `+${t}%`, document.getElementById("flatBonusesQuantDisplay").innerText = `+${d}%`, document.getElementById("flatBonusesRarityDisplay").innerText = `+${a}%`, document.getElementById("finalQuantSummary").innerText = `${i}%`, document.getElementById("finalRaritySummary").innerText = `${r}%`, document.getElementById("finalPackSummary").innerText = `${n}%`
+      }
+
+      function getCalculatorState() {
+        var e = activeMods.map(t => {
+          return MOD_DATABASE.find(e => e.id === t.id) && !t.isCustom ? {
+            type: "database",
+            id: t.id
+          } : {
+            type: "custom",
+            id: t.id,
+            name: t.name,
+            quant: Number(t.quant) || 0,
+            rarity: Number(t.rarity) || 0,
+            pack: Number(t.pack) || 0,
+            tier: t.tier || "Custom"
+          }
         });
-
-
-    /* CUSTOM ID COUNTER */
-
-    let highestCustomId = 0;
-
-
-    activeMods.forEach(mod => {
-
-        if (
-            mod.isCustom &&
-            typeof mod.id ===
-                'string'
-        ) {
-
-            const match =
-                mod.id.match(
-                    /^custom_(\d+)$/
-                );
-
-
-            if (match) {
-
-                highestCustomId =
-                    Math.max(
-                        highestCustomId,
-                        parseInt(
-                            match[1],
-                            10
-                        )
-                    );
-
-            }
-
+        return {
+          version: 2,
+          settings: {
+            explicitEffect: parseFloat(document.getElementById("explicitEffect").value) || 0,
+            mapQuality: parseFloat(document.getElementById("mapQuality").value) || 0,
+            atlasFlatQuant: parseFloat(document.getElementById("atlasFlatQuant").value) || 0,
+            atlasFlatRarity: parseFloat(document.getElementById("atlasFlatRarity").value) || 0,
+            unidMap: document.getElementById("unidMap").checked,
+            mapDeviceCraft: document.getElementById("mapDeviceCraft").checked
+          },
+          activeMods: e
         }
+      }
 
-    });
+      function downloadSetup() {
+        var e = getCalculatorState(),
+          t = JSON.stringify(e, null, 2),
+          e = new Blob([t], {
+            type: "application/json"
+          }),
+          t = URL.createObjectURL(e);
+        const a = document.createElement("a");
+        a.href = t;
+        e = (new Date).toISOString().replace(/[:.]/g, "-");
+        a.download = `poe-map-calculator-${e}.json`, document.body.appendChild(a), a.click(), a.remove(), URL.revokeObjectURL(t), showImportStatus("Setup downloaded successfully.", "#50e3c2")
+      }
 
+      function uploadSetup(t) {
+        var e = t.target.files[0];
+        if (e) {
+          const a = new FileReader;
+          a.onload = function(e) {
+            try {
+              importState(JSON.parse(e.target.result)), showImportStatus("Setup uploaded successfully.", "#50e3c2")
+            } catch (e) {
+              console.error("Import error:", e), showImportStatus("Invalid calculator JSON file.", "#e74c3c")
+            }
+            t.target.value = ""
+          }, a.onerror = function() {
+            showImportStatus("Could not read the setup file.", "#e74c3c")
+          }, a.readAsText(e)
+        }
+      }
 
-    customModCounter =
-        highestCustomId + 1;
+      function importState(e) {
+        if (!e || "object" != typeof e) throw new Error("Invalid state");
+        if (!e.settings || !Array.isArray(e.activeMods)) throw new Error("Invalid calculator setup");
+        document.getElementById("explicitEffect").value = e.settings.explicitEffect ?? 0, document.getElementById("mapQuality").value = e.settings.mapQuality ?? 0, document.getElementById("atlasFlatQuant").value = e.settings.atlasFlatQuant ?? 0, document.getElementById("atlasFlatRarity").value = e.settings.atlasFlatRarity ?? 0, document.getElementById("unidMap").checked = Boolean(e.settings.unidMap), document.getElementById("mapDeviceCraft").checked = Boolean(e.settings.mapDeviceCraft), activeMods = [], e.activeMods.slice(0, MAX_EXPLICIT_MODS).forEach(t => {
+          var e;
+          "database" === t.type && t.id ? (e = MOD_DATABASE.find(e => e.id === t.id)) && activeMods.push({
+            ...e
+          }) : "custom" === t.type && t.id && activeMods.push({
+            id: t.id,
+            name: t.name || "Custom Explicit Modifier",
+            quant: Number(t.quant) || 0,
+            rarity: Number(t.rarity) || 0,
+            pack: Number(t.pack) || 0,
+            tier: t.tier || "Custom",
+            isCustom: !0
+          })
+        });
+        let t = 0;
+        activeMods.forEach(e => {
+          !e.isCustom || "string" != typeof e.id || (e = e.id.match(/^custom_(\d+)$/)) && (t = Math.max(t, parseInt(e[1], 10)))
+        }), customModCounter = t + 1, clearPresetHighlight(), updateUI()
+      }
 
+      function showImportStatus(e, t) {
+        const a = document.getElementById("importStatus");
+        a.innerText = e, a.style.color = t
+      }
 
-    clearPresetHighlight();
+      function showStatus(e, t) {
+        showImportStatus(e, t)
+      }
 
-    updateUI();
+      function clearStatus() {
+        const e = document.getElementById("importStatus");
+        e.innerText = ""
+      }
 
-}
+      function escapeHtml(e) {
+        return String(e).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;")
+      }
 
-
-/* ============================================================
-   STATUS
-============================================================ */
-
-function showImportStatus(
-    message,
-    color
-) {
-
-    const element =
-        document.getElementById(
-            'importStatus'
-        );
-
-
-    element.innerText =
-        message;
-
-
-    element.style.color =
-        color;
-
-}
-
-
-function showStatus(
-    message,
-    color
-) {
-
-    showImportStatus(
-        message,
-        color
-    );
-
-}
-
-
-function clearStatus() {
-
-    const element =
-        document.getElementById(
-            'importStatus'
-        );
-
-
-    element.innerText = '';
-
-}
-
-
-/* ============================================================
-   ESCAPE HTML
-============================================================ */
-
-function escapeHtml(value) {
-
-    return String(value)
-
-        .replace(
-            /&/g,
-            '&amp;'
-        )
-
-        .replace(
-            /</g,
-            '&lt;'
-        )
-
-        .replace(
-            />/g,
-            '&gt;'
-        )
-
-        .replace(
-            /"/g,
-            '&quot;'
-        )
-
-        .replace(
-            /'/g,
-            '&#039;'
-        );
-
-}
-
-
-/* ============================================================
-   UPDATE UI
-============================================================ */
-
-function updateUI() {
-
-    filterModList();
-
-    renderActiveMods();
-
-    calculate();
-
-}
-
-
-/* ============================================================
-   INITIALIZE
-============================================================ */
-
-window.onload = function() {
-
-    renderModSelector();
-
-    renderActiveMods();
-
-    calculate();
-
-};
-
-</script>
-
-</body>
-</html>
+      function updateUI() {
+        filterModList(), renderActiveMods(), calculate()
+      }
+      window.onload = function() {
+        renderModSelector(), renderActiveMods(), calculate()
+      }
+    </script>
